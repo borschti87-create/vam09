@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAM 09 | Verein Aktiver Musiker e.V.</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <div class="logo">VAM 09</div>
+            <nav id="main-nav">
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#gigs">Gigs</a></li>
+                    <li><a href="#about">Verein</a></li>
+                    <li><a href="#join">Mitmachen</a></li>
+                    <li><a href="#contact">Kontakt</a></li>
+                </ul>
+            </nav>
+            <div class="menu-toggle" id="mobile-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>LAUT. ECHT. VAM09.</h1>
+            <p>Dein Verein für Rock & Live-Musik in der Region.</p>
+            <a href="#gigs" class="btn">Nächste Shows</a>
+        </div>
+    </section>
+
+    <main class="container">
+        
+        <section id="gigs" class="section">
+            <h2 class="section-title">Nächste Eskalation</h2>
+            <div class="ticket-list">
+                <div class="ticket">
+                    <div class="date">15<span>MAI</span></div>
+                    <div class="info">
+                        <h3>Rock am Bau</h3>
+                        <p>Vereinsgelände | 19:00 Uhr</p>
+                    </div>
+                    <a href="#" class="btn-sm">Infos</a>
+                </div>
+                <div class="ticket">
+                    <div class="date">04<span>JUN</span></div>
+                    <div class="info">
+                        <h3>Biker Night</h3>
+                        <p>Open Air am Markt</p>
+                    </div>
+                    <a href="#" class="btn-sm">Infos</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section split">
+            <div class="text-side">
+                <h2 class="section-title">Der Verein</h2>
+                <p>Seit 2009 sind wir die Anlaufstelle für Musiker, die keine Lust auf "Standard" haben. Wir fördern Rock-Kultur, bieten Proberäume und organisieren Gigs.</p>
+                <p>Bei uns zählt nicht das Alter, sondern der Wille, die Bühne zu rocken.</p>
+            </div>
+            <div class="image-side">
+                <div class="placeholder-img">FOTO: VEREIN IN ACTION</div>
+            </div>
+        </section>
+
+        <section id="join" class="section cta-box">
+            <h2>Werde Teil der Crew</h2>
+            <p>Du spielst ein Instrument oder willst uns unterstützen? Wir suchen immer aktive Leute.</p>
+            <a href="downloads/anmeldung.pdf" class="btn" download>Anmeldung PDF</a>
+        </section>
+
+        <section id="contact" class="section">
+            <h2 class="section-title">Schreib uns</h2>
+            <form class="contact-form">
+                <input type="text" placeholder="Name" required>
+                <input type="email" placeholder="E-Mail" required>
+                <textarea placeholder="Deine Nachricht..." rows="5" required></textarea>
+                <button type="submit" class="btn">Abschicken</button>
+            </form>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2026 VAM 09 e.V. | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

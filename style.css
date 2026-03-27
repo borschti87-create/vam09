@@ -1,0 +1,142 @@
+/* RESET & BASE */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    background-color: #121212;
+    color: #f0f0f0;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+}
+
+h1, h2, h3, .logo {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.section { padding: 80px 0; }
+.section-title { 
+    font-size: 2.5rem; 
+    margin-bottom: 30px; 
+    border-left: 5px solid #e31b23; 
+    padding-left: 15px;
+}
+
+/* HEADER & NAV */
+header {
+    background: rgba(0,0,0,0.95);
+    border-bottom: 3px solid #e31b23;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.logo { font-size: 1.8rem; font-weight: bold; color: #e31b23; }
+
+nav ul { display: flex; list-style: none; }
+nav ul li { margin-left: 30px; }
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+nav a:hover { color: #e31b23; }
+
+/* HERO */
+.hero {
+    height: 80vh;
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('img/hero.jpg') center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero h1 { font-size: 4rem; letter-spacing: 2px; }
+.btn {
+    background: #e31b23;
+    color: #fff;
+    padding: 15px 30px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: 0.3s;
+}
+.btn:hover { background: #b3151b; transform: translateY(-3px); }
+
+/* GIG TICKETS */
+.ticket {
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    border: 1px solid #333;
+}
+
+.date {
+    background: #e31b23;
+    padding: 15px;
+    min-width: 80px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+.date span { display: block; font-size: 0.8rem; }
+
+.info { padding: 0 20px; flex-grow: 1; }
+.btn-sm {
+    border: 2px solid #e31b23;
+    color: #e31b23;
+    padding: 5px 15px;
+    text-decoration: none;
+    margin-right: 20px;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+/* SPLIT SECTION */
+.split { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
+.text-side, .image-side { flex: 1; min-width: 300px; }
+.placeholder-img {
+    background: #2a2a2a;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #444;
+}
+
+/* FORM */
+.contact-form input, .contact-form textarea {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 12px;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+footer {
+    text-align: center;
+    padding: 40px;
+    background: #000;
+    font-size: 0.9rem;
+}
