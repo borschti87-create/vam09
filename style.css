@@ -1,71 +1,163 @@
-/* Social Icons im Hero */
-.social-hero {
-    margin-bottom: 25px;
+/* --- BASIS & LAYOUT --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
 }
 
-.social-hero a {
+h1, h2, h3, h4, .logo {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.section { padding: 80px 0; }
+.section-title { 
+    font-size: 2.5rem; 
+    margin-bottom: 40px; 
+    border-left: 6px solid #e31b23; 
+    padding-left: 20px;
     color: #fff;
-    font-size: 2rem;
-    margin: 0 15px;
+}
+
+/* --- NAVIGATION --- */
+header {
+    background: #000;
+    border-bottom: 3px solid #e31b23;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+}
+
+.logo { font-size: 2rem; font-weight: bold; color: #e31b23; }
+
+nav ul { display: flex; list-style: none; }
+nav ul li { margin-left: 25px; }
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
     transition: 0.3s;
+    font-size: 0.9rem;
+}
+nav a:hover { color: #e31b23; }
+
+/* --- HERO --- */
+.hero {
+    height: 85vh;
+    background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('img/hero.jpg') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-.social-hero a:hover {
-    color: #e31b23;
-}
+.hero h1 { font-size: clamp(3rem, 8vw, 5rem); color: #fff; line-height: 1; }
+.hero p { font-size: 1.2rem; color: #ccc; margin: 20px 0; }
 
-/* Vorstand Karten */
+.social-hero { margin-bottom: 30px; }
+.social-hero a { color: #fff; font-size: 2rem; margin: 0 15px; transition: 0.3s; }
+.social-hero a:hover { color: #e31b23; transform: scale(1.2); }
+
+.btn {
+    background: #e31b23;
+    color: #fff;
+    padding: 15px 35px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: bold;
+    transition: 0.3s;
+    border: none;
+}
+.btn:hover { background: #b3151b; transform: translateY(-3px); }
+
+/* --- GRID & CARDS (Vorstand) --- */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
 }
 
 .card {
     background: #1a1a1a;
-    padding: 30px;
-    border-top: 4px solid #e31b23;
+    padding: 40px 20px;
     text-align: center;
+    border-bottom: 4px solid #333;
+    transition: 0.3s;
 }
+.card:hover { border-color: #e31b23; transform: translateY(-5px); }
+.card h3 { margin: 15px 0 10px; color: #fff; }
+.icon-red { font-size: 2.5rem; color: #e31b23; }
 
-/* Footer Grid */
-.footer-grid {
+/* --- TICKETS (Events) --- */
+.ticket {
+    background: #1a1a1a;
     display: flex;
-    justify-content: space-around;
-    padding: 40px 5%;
-    flex-wrap: wrap;
-    gap: 30px;
+    align-items: center;
+    border: 1px solid #222;
+    margin-bottom: 20px;
 }
 
-.footer-box h4 {
-    margin-bottom: 15px;
-    color: #e31b23;
-}
-
-.footer-box a {
-    color: #ccc;
-    text-decoration: none;
-    font-size: 0.9rem;
-}
-
-.social-footer a {
-    font-size: 1.5rem;
-    color: #fff;
-    margin-right: 15px;
-}
-
-.copyright {
-    text-align: center;
+.date {
+    background: #e31b23;
     padding: 20px;
-    color: #555;
-    border-top: 1px solid #222;
-}
-
-/* Link-Style */
-.btn-link {
-    color: #e31b23;
-    text-decoration: none;
+    min-width: 100px;
+    text-align: center;
+    color: #fff;
     font-weight: bold;
-    display: inline-block;
-    margin-top: 15px;
+    font-size: 1.8rem;
+}
+.date span { display: block; font-size: 0.8rem; }
+
+.info { padding: 0 30px; flex-grow: 1; }
+.btn-sm { border: 2px solid #e31b23; color: #fff; padding: 8px 20px; text-decoration: none; font-weight: bold; margin-right: 20px; transition: 0.3s; }
+.btn-sm:hover { background: #e31b23; }
+
+/* --- CTA BOX --- */
+.cta-box { background: #1a1a1a; padding: 60px; text-align: center; border: 1px solid #e31b23; }
+
+/* --- KONTAKT FORM --- */
+.contact-form { max-width: 600px; margin: 0 auto; }
+.contact-form input, .contact-form textarea {
+    width: 100%; background: #222; border: 1px solid #444; padding: 15px; color: #fff; margin-bottom: 15px;
+}
+.contact-form input:focus { border-color: #e31b23; outline: none; }
+
+/* --- FOOTER --- */
+footer { background: #000; padding: 60px 0 20px; border-top: 3px solid #e31b23; }
+.footer-grid { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 40px; margin-bottom: 40px; }
+.footer-box { flex: 1; min-width: 200px; }
+.footer-box h4 { color: #e31b23; margin-bottom: 20px; }
+.footer-box ul { list-style: none; }
+.footer-box a { color: #ccc; text-decoration: none; transition: 0.3s; line-height: 2; }
+.footer-box a:hover { color: #fff; }
+.social-footer a { font-size: 1.5rem; margin-right: 20px; color: #fff; }
+.copyright { text-align: center; color: #555; font-size: 0.8rem; border-top: 1px solid #222; padding-top: 20px; }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .nav-container { flex-direction: column; height: auto; padding: 20px 0; }
+    nav ul { margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+    nav ul li { margin: 5px 10px; }
+    .ticket { flex-direction: column; text-align: center; }
+    .date { width: 100%; }
+    .info { padding: 20px; }
+    .btn-sm { margin: 0 0 20px; display: inline-block; }
+    .split { flex-direction: column; }
 }
