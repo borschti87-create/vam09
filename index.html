@@ -6,6 +6,7 @@
     <title>VAM 09 e.V. | Verein Aktiver Musiker Staßfurt</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,8 +18,9 @@
             <nav id="main-nav">
                 <ul>
                     <li><a href="#home">Home</a></li>
-                    <li><a href="#gigs">Gigs</a></li>
                     <li><a href="#about">Verein</a></li>
+                    <li><a href="#vorstand">Vorstand</a></li>
+                    <li><a href="#gigs">Events</a></li>
                     <li><a href="#join">Mitmachen</a></li>
                     <li><a href="#contact">Kontakt</a></li>
                 </ul>
@@ -29,8 +31,13 @@
     <section id="home" class="hero">
         <div class="hero-content">
             <h1>VAM 09 e.V.</h1>
-            <p>Verein Aktiver Musiker – Die Rock-Zentrale in Braunschweig.</p>
-            <a href="#gigs" class="btn">Nächste Events</a>
+            <p>Die Rock-Zentrale in Staßfurt – Seit 2009 laut und aktiv.</p>
+            <div class="social-hero">
+                <a href="https://www.facebook.com/VAM09" target="_blank"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+            <a href="#gigs" class="btn">Nächste Termine</a>
         </div>
     </section>
 
@@ -38,36 +45,42 @@
         
         <section id="about" class="section split">
             <div class="text-side">
-                <h2 class="section-title">Unsere Mission</h2>
-                <p>Gegründet im Jahr 2009, ist der **VAM 09** die Heimat für Musiker, die keine Lust auf starre Strukturen haben. Wir fördern die Rock- und Metal-Kultur in Braunschweig und Umgebung.</p>
-                <ul class="rock-list">
-                    <li>Bereitstellung von Proberäumen</li>
-                    <li>Organisation von Konzerten & Rock-Nächten</li>
-                    <li>Netzwerk für Bands und Einzelmusiker</li>
-                    <li>Förderung des musikalischen Nachwuchses</li>
-                </ul>
+                <h2 class="section-title">Der Verein</h2>
+                <p>Der VAM 09 wurde am 03.04.2009 in Staßfurt gegründet. Unser Ziel ist es, Musikern ein Dach über dem Kopf zu geben – egal ob im Proberaum oder auf der Bühne.</p>
+                <p>Wir organisieren Konzerte, verwalten Proberäume und sind Ansprechpartner für alles, was in der Region Staßfurt mit Rockmusik zu tun hat.</p>
+                <a href="satzung.html" class="btn-link">Unsere Satzung lesen →</a>
             </div>
             <div class="image-side">
-                <div class="placeholder-img">PROBERAUM ACTION</div>
+                <div class="placeholder-img">BILD: GRÜNDUNG / VEREINSHEIM</div>
+            </div>
+        </section>
+
+        <section id="vorstand" class="section">
+            <h2 class="section-title">Die Crew (Vorstand)</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>1. Vorsitzender</h3>
+                    <p>[Name laut alter Seite einfügen]</p>
+                </div>
+                <div class="card">
+                    <h3>2. Vorsitzender</h3>
+                    <p>[Name laut alter Seite einfügen]</p>
+                </div>
+                <div class="card">
+                    <h3>Kassenwart</h3>
+                    <p>[Name laut alter Seite einfügen]</p>
+                </div>
             </div>
         </section>
 
         <section id="gigs" class="section">
-            <h2 class="section-title">Termine & Gigs</h2>
+            <h2 class="section-title">Nächste Eskalation</h2>
             <div class="ticket-list">
                 <div class="ticket">
                     <div class="date">TBA<span>2026</span></div>
                     <div class="info">
-                        <h3>VAM Rock-Nacht</h3>
-                        <p>Vereinsgelände | Einlass 19:00 Uhr</p>
-                    </div>
-                    <a href="#" class="btn-sm">Infos</a>
-                </div>
-                <div class="ticket">
-                    <div class="date">20<span>JUN</span></div>
-                    <div class="info">
-                        <h3>Sommerfest (Geplant)</h3>
-                        <p>Live-Musik & Grillen</p>
+                        <h3>Rock am See</h3>
+                        <p>Staßfurt | In Planung</p>
                     </div>
                     <a href="#" class="btn-sm">Infos</a>
                 </div>
@@ -75,30 +88,46 @@
         </section>
 
         <section id="join" class="section cta-box">
-            <h2>Werde Mitglied</h2>
-            <p>Egal ob Profi oder Anfänger, ob aktive Band oder förderndes Mitglied – wir brauchen Leute wie dich!</p>
+            <h2>Werde Teil des VAM 09</h2>
+            <p>Unterstütze die Szene als aktives oder förderndes Mitglied.</p>
             <div class="cta-buttons">
-                <a href="https://www.vam09.de/downloads/aufnahmeantrag.pdf" class="btn" target="_blank">Download Aufnahmeantrag</a>
+                <a href="https://www.vam09.de/downloads/aufnahmeantrag.pdf" class="btn" target="_blank">Aufnahmeantrag (PDF)</a>
             </div>
         </section>
 
         <section id="contact" class="section">
-            <h2 class="section-title">Schreib uns</h2>
+            <h2 class="section-title">Kontakt</h2>
             <form class="contact-form">
-                <input type="text" placeholder="Dein Name" required>
-                <input type="email" placeholder="Deine E-Mail" required>
-                <textarea placeholder="Deine Nachricht an den VAM 09..." rows="5" required></textarea>
-                <button type="submit" class="btn">Nachricht abschicken</button>
+                <input type="text" placeholder="Name" required>
+                <input type="email" placeholder="E-Mail" required>
+                <textarea placeholder="Nachricht..." rows="5" required></textarea>
+                <button type="submit" class="btn">Hau in die Tasten</button>
             </form>
         </section>
 
     </main>
 
     <footer>
-        <div class="footer-content">
-            <p>&copy; 2026 VAM 09 e.V. | <a href="#">Impressum</a> | <a href="#">Datenschutz</a></p>
-            <p style="font-size: 0.7rem; color: #555; margin-top: 10px;">Rock'n'Roll is here to stay.</p>
+        <div class="footer-grid">
+            <div class="footer-box">
+                <h4>VAM 09 e.V.</h4>
+                <p>Staßfurt, Deutschland</p>
+            </div>
+            <div class="footer-box">
+                <h4>Rechtliches</h4>
+                <a href="impressum.html">Impressum</a><br>
+                <a href="datenschutz.html">Datenschutz</a><br>
+                <a href="satzung.html">Satzung</a>
+            </div>
+            <div class="footer-box">
+                <h4>Follow us</h4>
+                <div class="social-footer">
+                    <a href="https://www.facebook.com/VAM09" target="_blank"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
         </div>
+        <p class="copyright">&copy; 2026 VAM 09 e.V. Staßfurt</p>
     </footer>
 
     <script src="script.js"></script>
