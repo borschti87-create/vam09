@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VAM 09 e.V. | Verein Aktiver Musiker Staßfurt</title>
+    <title>VAM 09 e.V. | Haus der Musik Staßfurt</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,7 +13,7 @@
 <body>
 
     <header>
-        <div class="nav-container">
+        <div class="nav-container container">
             <div class="logo">VAM 09</div>
             <nav id="main-nav">
                 <ul>
@@ -21,7 +21,7 @@
                     <li><a href="#about">Verein</a></li>
                     <li><a href="#vorstand">Vorstand</a></li>
                     <li><a href="#gigs">Events</a></li>
-                    <li><a href="#join">Mitmachen</a></li>
+                    <li><a href="#booking">Raum buchen</a></li>
                     <li><a href="#contact">Kontakt</a></li>
                 </ul>
             </nav>
@@ -31,7 +31,7 @@
     <section id="home" class="hero">
         <div class="hero-content">
             <h1>VAM 09 e.V.</h1>
-            <p>Die Rock-Zentrale in Staßfurt – Seit 2009 laut und aktiv.</p>
+            <p>Dein Zuhause für Musik in Staßfurt – Seit 2009 aktiv für alle Genres.</p>
             <div class="social-hero">
                 <a href="https://www.facebook.com/VAM09" target="_blank"><i class="fab fa-facebook"></i></a>
                 <a href="https://www.youtube.com/@VAM2009" target="_blank"><i class="fab fa-youtube"></i></a>
@@ -47,7 +47,7 @@
             <div class="text-side">
                 <h2 class="section-title">Der Verein</h2>
                 <p>Der VAM 09 wurde am 03.04.2009 in Staßfurt gegründet. Unser Ziel ist es, Musikern ein Dach über dem Kopf zu geben – egal ob im Proberaum oder auf der Bühne.</p>
-                <p>Wir organisieren Konzerte, verwalten Proberäume und sind Ansprechpartner für alles, was in der Region Staßfurt mit Rockmusik zu tun hat.</p>
+                <p>Wir fördern die Musikkultur in der Region Staßfurt und sind Ansprechpartner für Künstler aller Stilrichtungen.</p>
                 <a href="satzung.html" class="btn-link">Unsere Satzung lesen →</a>
             </div>
             <div class="image-side">
@@ -59,17 +59,17 @@
             <h2 class="section-title">Die Crew</h2>
             <div class="grid">
                 <div class="card">
-                    <i class="fas fa-user-shield icon-red"></i>
+                    <i class="fas fa-user-shield icon-color"></i>
                     <h3>1. Vorsitzender</h3>
                     <p>Steve Peterka</p>
                 </div>
                 <div class="card">
-                    <i class="fas fa-user-friends icon-red"></i>
+                    <i class="fas fa-user-friends icon-color"></i>
                     <h3>2. Vorsitzender</h3>
                     <p>Chris Brennecke</p>
                 </div>
                 <div class="card">
-                    <i class="fas fa-cash-register icon-red"></i>
+                    <i class="fas fa-cash-register icon-color"></i>
                     <h3>Kassenwart</h3>
                     <p>Kevin Christoph</p>
                 </div>
@@ -77,12 +77,12 @@
         </section>
 
         <section id="gigs" class="section">
-            <h2 class="section-title">Nächste Eskalation</h2>
+            <h2 class="section-title">Veranstaltungen</h2>
             <div class="ticket-list">
                 <div class="ticket">
                     <div class="date">TBA<span>2026</span></div>
                     <div class="info">
-                        <h3>Rock am See</h3>
+                        <h3>Rock am See / Event</h3>
                         <p>Staßfurt | In Planung</p>
                     </div>
                     <a href="#contact" class="btn-sm">Anfragen</a>
@@ -90,11 +90,24 @@
             </div>
         </section>
 
-        <section id="join" class="section cta-box">
-            <h2>Werde Teil des VAM 09</h2>
-            <p>Unterstütze die Szene als aktives oder förderndes Mitglied.</p>
-            <div class="cta-buttons">
-                <a href="https://www.vam09.de/downloads/aufnahmeantrag.pdf" class="btn" target="_blank">Aufnahmeantrag (PDF)</a>
+        <section id="booking" class="section">
+            <h2 class="section-title">Raum buchen</h2>
+            <div class="booking-container">
+                <div class="booking-info">
+                    <h3>Konditionen</h3>
+                    <p>Nutze unseren Proberaum für deine Sessions. Faire Preise für Vereinsmitglieder und Gäste.</p>
+                    <ul class="check-list">
+                        <li>Stundensatz: 15,- €</li>
+                        <li>Inkl. Grund-Equipment</li>
+                        <li>Zentrale Lage in Staßfurt</li>
+                    </ul>
+                </div>
+                <form class="contact-form">
+                    <input type="text" placeholder="Name / Band" required>
+                    <input type="date" required>
+                    <textarea placeholder="Deine Anfrage zur Buchung..." rows="3"></textarea>
+                    <button type="submit" class="btn">Verfügbarkeit prüfen</button>
+                </form>
             </div>
         </section>
 
@@ -103,8 +116,8 @@
             <form class="contact-form">
                 <input type="text" placeholder="Name" required>
                 <input type="email" placeholder="E-Mail" required>
-                <textarea placeholder="Nachricht..." rows="5" required></textarea>
-                <button type="submit" class="btn">Hau in die Tasten</button>
+                <textarea placeholder="Deine Nachricht an den VAM 09..." rows="5" required></textarea>
+                <button type="submit" class="btn">Nachricht abschicken</button>
             </form>
         </section>
 
@@ -114,7 +127,7 @@
         <div class="footer-grid container">
             <div class="footer-box">
                 <h4>VAM 09 e.V.</h4>
-                <p>Verein Aktiver Musiker<br>Staßfurt, Sachsen-Anhalt</p>
+                <p>Staßfurt, Sachsen-Anhalt</p>
             </div>
             <div class="footer-box">
                 <h4>Rechtliches</h4>
@@ -125,7 +138,7 @@
                 </ul>
             </div>
             <div class="footer-box">
-                <h4>Follow us</h4>
+                <h4>Folge uns</h4>
                 <div class="social-footer">
                     <a href="https://www.facebook.com/VAM09" target="_blank"><i class="fab fa-facebook"></i></a>
                     <a href="https://www.youtube.com/@VAM2009" target="_blank"><i class="fab fa-youtube"></i></a>
