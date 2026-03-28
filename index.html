@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VAM 09 e.V. | Haus der Musik Staßfurt</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
+    <header class="main-header">
         <div class="nav-container container">
             <div class="logo">VAM 09</div>
             <nav id="main-nav">
@@ -20,152 +20,127 @@
                     <li><a href="#home">Start</a></li>
                     <li><a href="#about">Über uns</a></li>
                     <li><a href="#join">Mitmachen</a></li>
-                    <li><a href="#proberaum">Proberaum</a></li>
-                    <li><a href="#werkstatt">Werkstatt</a></li>
-                    <li><a href="#verleih">Verleih</a></li>
+                    <li><a href="#rooms">Räume</a></li>
+                    <li><a href="#rental">Verleih</a></li>
                     <li><a href="#events">Events</a></li>
-                    <li><a href="#spende">Spende</a></li>
+                    <li><a href="#donate">Spende</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <main>
-        <section id="home" class="hero">
-            <div class="container">
-                <div class="hero-grid">
-                    <div class="hero-text">
-                        <h1>Musik verbindet Staßfurt</h1>
-                        <p class="aktuelles-tag"><strong>Lust was zu bewegen?</strong> Werde Teil der VAM-Familie. Wir sind die zentrale Anlaufstelle für Musiker in der Region.</p>
-                        <div class="social-hero">
-                            <a href="https://www.facebook.com/VAM09" target="_blank"><i class="fab fa-facebook"></i></a>
-                            <a href="https://www.instagram.com/vam_2009/" target="_blank"><i class="fab fa-instagram"></i></a>
-                            <a href="https://www.youtube.com/@VAM2009" target="_blank"><i class="fab fa-youtube"></i></a>
-                        </div>
-                        <a href="#join" class="btn">Jetzt Mitmachen</a>
+    <section id="home" class="hero-full">
+        <div class="video-bg">
+            <iframe 
+                src="https://www.youtube.com/embed/aikE_XJ-kDQ?autoplay=1&mute=1&loop=1&playlist=aikE_XJ-kDQ&controls=0&rel=0&showinfo=0&iv_load_policy=3" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        <div class="hero-content container">
+            <h1>Musik verbindet<br>Staßfurt</h1>
+            <p>Dein Haus der Musik. Kreativ. Leidenschaftlich. Erfahren.</p>
+            <div class="social-links">
+                <a href="https://www.facebook.com/VAM09" target="_blank"><i class="fab fa-facebook"></i></a>
+                <a href="https://www.instagram.com/vam_2009/" target="_blank"><i class="fab fa-instagram"></i></a>
+            </div>
+            <a href="#join" class="btn-main">Jetzt Mitmachen</a>
+        </div>
+    </section>
+
+    <main class="main-wrapper container">
+        
+        <div class="content-grid">
+            
+            <div id="about" class="info-card span-2">
+                <h2 class="card-title">Über uns</h2>
+                <p class="lead-text">Gegründet am 03.04.2009. Wir fördern Musiker aller Genres und Generationen in der Region Staßfurt.</p>
+                <p><strong>Adresse:</strong> [Deine Straße], 39418 Staßfurt</p>
+                <div class="team-grid">
+                    <div class="team-item"><strong>Steve Peterka</strong> 1. Vorsitzender</div>
+                    <div class="team-item"><strong>Chris Brennecke</strong> 2. Vorsitzender</div>
+                    <div class="team-item"><strong>Kevin Christoph</strong> Kassenwart</div>
+                </div>
+                <a href="satzung.html" class="btn-outline">Satzung lesen</a>
+            </div>
+
+            <div id="join" class="info-card accent-card">
+                <h3>Mitglied werden</h3>
+                <p>Unterstütze die Musikszene aktiv oder fördernd.</p>
+                <a href="aufnahmeantrag.pdf" class="btn-light" target="_blank"><i class="fas fa-file-pdf"></i> Antrag</a>
+            </div>
+
+            <div id="rooms" class="info-card">
+                <i class="fas fa-microphone-lines icon-main"></i>
+                <h3>Proberaum</h3>
+                <ul class="feature-list">
+                    <li>PA-Anlage & Mischpult</li>
+                    <li>Kalender-Anfrage</li>
+                </ul>
+                <a href="#contact" class="btn-outline">Buchen</a>
+            </div>
+            <div id="werkstatt" class="info-card">
+                <i class="fas fa-tools icon-main"></i>
+                <h3>Werkstatt</h3>
+                <ul class="feature-list">
+                    <li>Lötstationen</li>
+                    <li>Werkzeug-Nutzung</li>
+                </ul>
+                <a href="#contact" class="btn-outline">Buchen</a>
+            </div>
+
+            <div id="rental" class="info-card span-2">
+                <h2 class="card-title">Gerätevermietung</h2>
+                <div class="price-table">
+                    <div class="price-row">
+                        <span>Licht-Set (4er LED Bar inkl. Stativ)</span>
+                        <span class="price-tag">Ab 20€ / Tag</span>
                     </div>
-                    <div class="hero-video">
-                        <div class="video-responsive">
-                            <iframe 
-                                src="https://www.youtube.com/embed/aikE_XJ-kDQ?autoplay=1&mute=1&loop=1&playlist=aikE_XJ-kDQ&controls=0&rel=0" 
-                                title="VAM 09 Werbevideo" 
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                allowfullscreen>
-                            </iframe>
-                        </div>
+                    <div class="price-row">
+                        <span>Fullrange Box (Aktiv, 12", 1000W)</span>
+                        <span class="price-tag">Ab 15€ / Tag</span>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <section id="about" class="section container">
-            <h2 class="section-title">Über uns</h2>
-            <div class="split">
-                <div class="text-side">
-                    <h3>Historie & Vorhaben</h3>
-                    <p>Gegründet am 03.04.2009 in Staßfurt. Wir fördern Musiker aller Genres und schaffen Raum für kreative Köpfe.</p>
-                    <p><strong>Adresse:</strong> [Deine Straße], 39418 Staßfurt</p>
-                    <a href="satzung.html" class="btn-sm">Satzung lesen</a>
+            <div id="events" class="info-card span-2 gray-bg">
+                <h2 class="card-title">Events</h2>
+                <div class="event-items">
+                    <div class="event-box"><strong>Musiker-Stammtisch</strong> Jeden 1. Freitag im Monat</div>
+                    <div class="event-box"><strong>Musik-Flohmarkt</strong> Termin in Planung</div>
+                    <div class="event-box"><strong>Arbeitseinsatz</strong> Gemeinsam für den Verein</div>
                 </div>
-                <div class="board-side">
-                    <h3>Der Vorstand</h3>
-                    <div class="board-flex">
-                        <div class="board-card"><strong>Steve Peterka</strong><br>1. Vorsitzender</div>
-                        <div class="board-card"><strong>Chris Brennecke</strong><br>2. Vorsitzender</div>
-                        <div class="board-card"><strong>Kevin Christoph</strong><br>Kassenwart</div>
+            </div>
+
+            <div id="donate" class="info-card accent-card">
+                <i class="fas fa-heart icon-white"></i>
+                <h3>Spenden</h3>
+                <p>Gemeinnützig & steuerlich absetzbar.</p>
+                <p class="iban-text"><strong>IBAN:</strong> DE12 3456...</p>
+                <a href="#" class="btn-light paypal-style">PayPal</a>
+            </div>
+
+            <div id="contact" class="info-card span-2">
+                <h2 class="card-title">Kontakt</h2>
+                <form class="main-form">
+                    <div class="form-group">
+                        <input type="text" placeholder="Name" required>
+                        <input type="email" placeholder="E-Mail" required>
                     </div>
-                </div>
+                    <select>
+                        <option>Proberaum / Werkstatt buchen</option>
+                        <option>Geräte leihen</option>
+                        <option>Allgemeine Anfrage</option>
+                    </select>
+                    <textarea placeholder="Deine Nachricht..." rows="3"></textarea>
+                    <button type="submit" class="btn-main">Anfrage abschicken</button>
+                </form>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section id="join" class="section bg-light">
-            <div class="container cta-box">
-                <h2>Mitglied werden</h2>
-                <p>Unterstütze die Musikszene aktiv oder als förderndes Mitglied.</p>
-                <a href="aufnahmeantrag.pdf" class="btn" target="_blank"><i class="fas fa-file-pdf"></i> Antrag herunterladen</a>
-            </div>
-        </section>
-
-        <section id="proberaum" class="section container">
-            <h2 class="section-title">Proberaum</h2>
-            <div class="split">
-                <div class="image-box-placeholder">FOTOS PROBERAUM</div>
-                <div class="text-side">
-                    <h3>Einmieten & Ausstattung</h3>
-                    <p>Voll ausgestatteter Raum mit PA, Schlagzeug und Amps.</p>
-                    <ul class="check-list">
-                        <li>Kalender-Anfrage online</li>
-                        <li>Faire Stundensätze</li>
-                    </ul>
-                    <a href="#contact" class="btn-sm">Anfragen / Kalender</a>
-                </div>
-            </div>
-        </section>
-
-        <section id="werkstatt" class="section bg-light">
-            <div class="container split">
-                <div class="text-side">
-                    <h2 class="section-title">Werkstatt</h2>
-                    <p>Platz für Reparaturen, Lötarbeiten und Technik-Checks.</p>
-                    <a href="#contact" class="btn-sm">Werkstatt einmieten</a>
-                </div>
-                <div class="image-box-placeholder">FOTO WERKSTATT</div>
-            </div>
-        </section>
-
-        <section id="verleih" class="section container">
-            <h2 class="section-title">Gerätevermietung</h2>
-            <div class="rental-grid">
-                <div class="rental-card">
-                    <div class="img-mini">FOTO</div>
-                    <h4>Licht-Set</h4>
-                    <p class="price">Ab 20€ / Tag</p>
-                </div>
-                <div class="rental-card">
-                    <div class="img-mini">FOTO</div>
-                    <h4>Aktiv-Box</h4>
-                    <p class="price">Ab 15€ / Tag</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="events" class="section bg-light">
-            <div class="container">
-                <h2 class="section-title">Events</h2>
-                <div class="event-grid">
-                    <div class="event-card"><strong>Stammtisch</strong><p>Jeden 1. Freitag / Monat</p></div>
-                    <div class="event-card"><strong>Flohmarkt</strong><p>Jährliches Event</p></div>
-                    <div class="event-card"><strong>Arbeitseinsatz</strong><p>Gemeinsam aktiv</p></div>
-                </div>
-            </div>
-        </section>
-
-        <section id="spende" class="section container">
-            <h2 class="section-title">Spenden</h2>
-            <div class="split">
-                <div class="text-side">
-                    <p>Wir freuen uns über Geld- und Sachspenden. Wir stellen Spendenquittungen aus.</p>
-                    <p><strong>Konto:</strong> DE12 3456 7890 1234 5678</p>
-                </div>
-                <div class="text-side" style="text-align: right;">
-                    <a href="#" class="btn" style="background:#0070ba">PayPal Spende</a>
-                </div>
-            </div>
-        </section>
-
-        <section id="contact" class="section container">
-            <h2 class="section-title">Kontakt</h2>
-            <form class="contact-form">
-                <input type="text" placeholder="Dein Name" required>
-                <input type="email" placeholder="Deine E-Mail" required>
-                <textarea placeholder="Nachricht..." rows="4"></textarea>
-                <button type="submit" class="btn">Abschicken</button>
-            </form>
-        </section>
-    </main>
-
-    <footer>
+    <footer class="main-footer">
         <div class="container">
             <p>&copy; 2026 VAM 09 e.V. Staßfurt | <a href="impressum.html">Impressum</a></p>
         </div>
