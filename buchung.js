@@ -1,24 +1,36 @@
 const form = document.querySelector('#buchungsformular');
 const room = form.elements.raum;
-const date = form.elements.datum;
 const hours = form.elements.stunden;
-const starts = form.elements.uhrzeit;
 const submit = form.elements.buchen;
 const price = document.querySelector('#buchung-preis');
 const calendarStatus = document.querySelector('#kalender-status');
 const bookingStatus = document.querySelector('#buchung-status');
+const calendar = document.querySelector('#kalender-tage');
+const monthTitle = document.querySelector('#kalender-monat');
+const previous = document.querySelector('#monat-zurueck');
+const next = document.querySelector('#monat-weiter');
+const dateLabel = document.querySelector('#termin-datum');
+const times = document.querySelector('#termin-zeiten');
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
-let availabilityRequest;
-let pendingBooking;
+const monthLabel = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const fullDate = new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeZone: 'UTC' });
 
 const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit'
 }).format(new Date());
-date.min = today;
-date.value = today;
+const firstMonth = today.slice(0, 7);
+const lastMonth = new Date(Date.parse(today) + 365 * 86400000).toISOString().slice(0, 7);
 
-const selectedRoom = new URLSearchParams(location.search).get('raum');
-if (Array.from(room.options).some(option => option.value === selectedRoom)) room.value = selectedRoom;
+let month = firstMonth;
+let selectedDay = '';
+let selectedHour;
+let availability = {};
+let calendarRequest;
+let pendingBooking;
+let submitting = false;
+
+const requestedRoom = new URLSearchParams(location.search).get('raum');
+if (['proberaum', 'werkstatt'].includes(requestedRoom)) room.value = requestedRoom;
 
 async function api(path, options = {}) {
     const response = await fetch(path, options);
@@ -27,44 +39,112 @@ async function api(path, options = {}) {
     return result;
 }
 
-async function updateAvailability() {
-    availabilityRequest?.abort();
-    const request = new AbortController();
-    availabilityRequest = request;
-    starts.replaceChildren(new Option('Bitte wählen', ''));
-    starts.disabled = true;
+function timeLabel(hour) {
+    return `${String(hour).padStart(2, '0')}:00`;
+}
+
+function renderTimes() {
+    selectedHour = undefined;
     submit.disabled = true;
-    if (!date.validity.valid || !hours.validity.valid) {
+    dateLabel.textContent = selectedDay ? fullDate.format(new Date(selectedDay)) : 'Wähle einen verfügbaren Tag.';
+    times.replaceChildren();
+    for (const hour of availability[selectedDay] || []) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'time-choice';
+        button.textContent = timeLabel(hour);
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => {
+            selectedHour = hour;
+            submit.disabled = false;
+            for (const option of times.children) option.setAttribute('aria-pressed', String(option === button));
+        });
+        times.append(button);
+    }
+}
+
+function renderCalendar() {
+    const firstDay = new Date(`${month}-01`);
+    const count = new Date(Date.UTC(firstDay.getUTCFullYear(), firstDay.getUTCMonth() + 1, 0)).getUTCDate();
+    monthTitle.textContent = monthLabel.format(firstDay);
+    previous.disabled = month <= firstMonth;
+    next.disabled = month >= lastMonth;
+    const placeholders = (firstDay.getUTCDay() + 6) % 7;
+    const elements = Array.from({ length: placeholders }, () => document.createElement('span'));
+    for (let number = 1; number <= count; number++) {
+        const day = `${month}-${String(number).padStart(2, '0')}`;
+        const starts = availability[day];
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'calendar-day';
+        button.textContent = number;
+        button.disabled = !starts?.length;
+        button.setAttribute('aria-pressed', String(day === selectedDay));
+        button.setAttribute('aria-label', `${fullDate.format(new Date(day))}, ${starts?.length
+            ? `${starts.length} ${starts.length === 1 ? 'freie Startzeit' : 'freie Startzeiten'}`
+            : 'keine freie Startzeit'}`);
+        if (day === today) button.setAttribute('aria-current', 'date');
+        button.addEventListener('click', () => {
+            selectedDay = day;
+            for (const option of calendar.querySelectorAll('button')) option.setAttribute('aria-pressed', String(option === button));
+            renderTimes();
+        });
+        elements.push(button);
+    }
+    calendar.replaceChildren(...elements);
+    renderTimes();
+}
+
+async function loadCalendar() {
+    calendarRequest?.abort();
+    const request = new AbortController();
+    calendarRequest = request;
+    availability = {};
+    renderCalendar();
+    if (!hours.validity.valid) {
         price.value = '–';
-        calendarStatus.textContent = 'Bitte gib ein gültiges Datum und die gewünschte Dauer an.';
+        calendarStatus.textContent = 'Bitte eine Dauer von 1 bis 8 Stunden wählen.';
         return;
     }
     calendarStatus.textContent = 'Freie Zeiten werden geladen …';
     try {
-        const query = new URLSearchParams({ room: room.value, day: date.value, hours: hours.value });
-        const result = await api(`/api/availability?${query}`, { signal: request.signal });
+        const query = new URLSearchParams({ room: room.value, month, hours: hours.value });
+        const result = await api(`/api/calendar?${query}`, { signal: request.signal });
         if (request.signal.aborted) return;
+        availability = result.days;
+        if (!availability[selectedDay]) selectedDay = '';
         price.value = currency.format(result.cents / 100);
-        for (const hour of result.starts) starts.add(new Option(`${String(hour).padStart(2, '0')}:00 Uhr`, hour));
-        starts.disabled = !result.starts.length;
-        calendarStatus.textContent = result.starts.length ? '' : 'An diesem Tag ist für diese Dauer keine Zeit frei.';
+        calendarStatus.textContent = Object.keys(availability).length ? '' : 'In diesem Monat sind für diese Dauer keine Termine frei.';
+        renderCalendar();
     } catch (error) {
         if (!request.signal.aborted) calendarStatus.textContent = error.status ? error.message : 'Der Buchungsserver konnte nicht erreicht werden.';
     }
 }
 
-for (const field of [room, date, hours]) field.addEventListener('change', updateAvailability);
-starts.addEventListener('change', () => { submit.disabled = !starts.value; });
+function moveMonth(direction) {
+    const target = new Date(`${month}-01`);
+    target.setUTCMonth(target.getUTCMonth() + direction);
+    month = target.toISOString().slice(0, 7);
+    selectedDay = '';
+    loadCalendar();
+}
+
+previous.addEventListener('click', () => moveMonth(-1));
+next.addEventListener('click', () => moveMonth(1));
+for (const choice of room) choice.addEventListener('change', loadCalendar);
+hours.addEventListener('input', loadCalendar);
+
 form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (!starts.value || submit.disabled) return;
+    if (submitting || selectedHour === undefined || submit.disabled) return;
     const payload = {
-        room: room.value, day: date.value, hour: Number(starts.value), hours: hours.valueAsNumber,
+        room: room.value, day: selectedDay, hour: selectedHour, hours: hours.valueAsNumber,
         name: form.elements.name.value.trim(), email: form.elements.email.value.trim()
     };
     const serialized = JSON.stringify(payload);
     if (pendingBooking?.serialized !== serialized) pendingBooking = { serialized, id: crypto.randomUUID() };
-    const fields = Array.from(form.elements);
+    const fields = Array.from(form.elements).filter(field => !field.disabled);
+    submitting = true;
     fields.forEach(field => { field.disabled = true; });
     bookingStatus.textContent = 'Die Buchung wird gespeichert …';
     try {
@@ -75,7 +155,7 @@ form.addEventListener('submit', async event => {
         });
         const formattedDate = result.day.split('-').reverse().join('.');
         document.querySelector('#bestaetigung-daten').textContent =
-            `Buchungsnummer ${result.reference} · ${result.room} · ${formattedDate}, ${result.hour}:00 Uhr · ${result.hours} Std. · ${currency.format(result.cents / 100)}`;
+            `Buchungsnummer ${result.reference} · ${result.room} · ${formattedDate}, ${timeLabel(result.hour)} Uhr · ${result.hours} Std. · ${currency.format(result.cents / 100)}`;
         document.querySelector('#bestaetigung-mail').textContent = result.emailSent
             ? 'Eine Bestätigung wurde per E-Mail verschickt.'
             : 'Speichere deine Buchungsnummer für Rückfragen an info@vam09.de.';
@@ -90,8 +170,9 @@ form.addEventListener('submit', async event => {
         document.querySelector('#bestaetigung-titel').focus();
     } catch (error) {
         fields.forEach(field => { field.disabled = false; });
+        submitting = false;
         bookingStatus.textContent = error.status ? error.message : 'Die Verbindung wurde unterbrochen. Bitte versuche dieselbe Anfrage erneut.';
-        if (error.status === 409) await updateAvailability();
+        if (error.status === 409) await loadCalendar();
     }
 });
-updateAvailability();
+loadCalendar();

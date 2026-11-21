@@ -27,7 +27,19 @@
         </form>
         <p id="admin-status" class="feedback" role="status"></p>
         <div id="admin-panel" hidden>
-            <button id="admin-logout" class="button button-line" type="button">Abmelden</button>
+            <nav class="admin-tools" aria-label="Buchungsverwaltung">
+                <a href="#admin-monat">Monatsübersicht</a>
+                <a href="#admin-slots">Zeiten und Buchungen</a>
+                <a href="#admin-einstellungen">Einstellungen</a>
+                <button id="admin-logout" class="button button-small button-line" type="button">Abmelden</button>
+            </nav>
+            <section id="admin-monat" aria-labelledby="admin-monat-titel">
+                <h2 id="admin-monat-titel">Monatsübersicht</h2>
+                <label class="admin-month-label">Monat <input id="admin-month" type="month" required></label>
+                <dl id="admin-month-totals" class="admin-metrics"></dl>
+                <div id="admin-month-days" class="admin-day-list"></div>
+                <p id="admin-month-status" class="feedback" role="status"></p>
+            </section>
             <form id="admin-slots" class="booking-form">
                 <h2>Öffnungszeiten für einen Tag</h2>
                 <div class="booking-fields">
@@ -49,6 +61,32 @@
             </form>
             <h2>Buchungen am gewählten Tag</h2>
             <div id="admin-bookings"></div>
+            <section id="admin-einstellungen" aria-labelledby="admin-einstellungen-titel">
+                <h2 id="admin-einstellungen-titel">Zahlung und E-Mail</h2>
+                <form id="admin-settings" class="settings-panel">
+                    <fieldset>
+                        <legend>PayPal</legend>
+                        <label class="toggle-label"><input name="paypalEnabled" type="checkbox"> PayPal nach der Buchung anbieten</label>
+                        <label>PayPal.Me-Name oder -Link <input name="paypal" maxlength="100" placeholder="paypal.me/vereinsname"></label>
+                        <p>Der Zahlungslink enthält den Buchungsbetrag. Der Vorstand gleicht den Eingang manuell ab.</p>
+                    </fieldset>
+                    <fieldset>
+                        <legend>Bestätigungs-E-Mail</legend>
+                        <label class="toggle-label"><input name="emailEnabled" type="checkbox"> Buchungsbestätigungen per E-Mail senden</label>
+                        <label>Verifizierte Absenderadresse <input type="email" name="emailFrom" maxlength="254" placeholder="buchung@vereinsdomain.de"></label>
+                        <label>Resend-API-Schlüssel <input type="password" name="emailKey" autocomplete="new-password" maxlength="203" placeholder="re_…"></label>
+                        <p id="admin-key-status">Bei leerem Feld bleibt der bisherige Schlüssel erhalten.</p>
+                        <label class="toggle-label"><input name="removeEmailKey" type="checkbox"> Gespeicherten Schlüssel entfernen</label>
+                    </fieldset>
+                    <div class="admin-actions"><button class="button button-dark" type="submit" disabled>Einstellungen speichern</button></div>
+                    <p id="admin-settings-status" class="feedback" role="status"></p>
+                </form>
+                <form id="admin-test-email" class="settings-panel">
+                    <label>Test-E-Mail an <input name="email" type="email" maxlength="254" required></label>
+                    <button class="button button-line" type="submit" disabled>Test-E-Mail senden</button>
+                    <p id="admin-test-status" class="feedback" role="status"></p>
+                </form>
+            </section>
         </div>
     </main>
     <footer class="site-footer">

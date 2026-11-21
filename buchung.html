@@ -17,34 +17,48 @@
             <a class="button button-small button-line" href="index.html#kuh">Zum KuH-Projekt</a>
         </div>
     </header>
-    <main class="section shell subpage" id="inhalt">
+    <main class="section shell subpage booking-page" id="inhalt">
         <p class="eyebrow">Kultur- und Innovationshof</p>
         <h1>Raum buchen.</h1>
         <p>Die erste Stunde kostet 5 €, jede weitere 3 €. Wähle Raum, Datum und Dauer, um die freien Startzeiten zu sehen.</p>
         <noscript><p class="note">Für Live-Verfügbarkeit und Buchungen ist JavaScript erforderlich.</p></noscript>
         <form id="buchungsformular" class="booking-form" autocomplete="on">
-            <div class="booking-fields">
-                <label>Raum
-                    <select name="raum" required>
-                        <option value="proberaum">KuH-Proberaum</option>
-                        <option value="werkstatt">KuH-DIY-Werkstatt</option>
-                    </select>
-                </label>
-                <label>Datum <input type="date" name="datum" required></label>
-                <label>Dauer in Stunden <input type="number" name="stunden" min="1" max="8" step="1" value="1" required></label>
-                <label>Freie Startzeit
-                    <select name="uhrzeit" required disabled><option value="">Bitte Datum wählen</option></select>
-                </label>
+            <fieldset class="booking-controls">
+                <legend>Raum und Dauer</legend>
+                <div class="room-choices">
+                    <label><input type="radio" name="raum" value="proberaum" checked><span>Proberaum</span></label>
+                    <label><input type="radio" name="raum" value="werkstatt"><span>DIY-Werkstatt</span></label>
+                </div>
+                <label class="duration-label">Dauer in Stunden <input type="number" name="stunden" min="1" max="8" step="1" value="1" required></label>
+            </fieldset>
+            <div class="booking-layout">
+                <section class="calendar-panel" aria-labelledby="kalender-monat">
+                    <div class="calendar-toolbar">
+                        <button id="monat-zurueck" class="button button-small button-line" type="button" aria-label="Vorheriger Monat">‹</button>
+                        <h2 id="kalender-monat" aria-live="polite">Kalender</h2>
+                        <button id="monat-weiter" class="button button-small button-line" type="button" aria-label="Nächster Monat">›</button>
+                    </div>
+                    <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+                        <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+                    </div>
+                    <div id="kalender-tage" class="calendar-grid" role="group" aria-label="Buchungstage"></div>
+                    <p id="kalender-status" class="feedback" role="status"></p>
+                    <p class="calendar-legend"><span aria-hidden="true"></span> Freie Startzeiten an diesem Tag</p>
+                </section>
+                <section class="calendar-panel booking-summary" aria-labelledby="termin-titel">
+                    <h2 id="termin-titel">Uhrzeit wählen</h2>
+                    <p id="termin-datum">Wähle einen verfügbaren Tag.</p>
+                    <div id="termin-zeiten" class="time-choices" role="group" aria-label="Freie Startzeiten"></div>
+                    <div class="booking-fields booking-person">
+                        <label>Name <input name="name" autocomplete="name" maxlength="100" required></label>
+                        <label>E-Mail <input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+                    </div>
+                    <p class="booking-price">Gesamtpreis <output id="buchung-preis">5,00 €</output></p>
+                    <p>Die Buchung reserviert den Raum verbindlich. <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
+                    <button name="buchen" type="submit" class="button button-dark" disabled>Zahlungspflichtig buchen</button>
+                    <p id="buchung-status" class="feedback" role="alert"></p>
+                </section>
             </div>
-            <p id="kalender-status" class="feedback" role="status"></p>
-            <div class="booking-fields booking-person">
-                <label>Name <input name="name" autocomplete="name" maxlength="100" required></label>
-                <label>E-Mail <input name="email" type="email" autocomplete="email" maxlength="254" required></label>
-            </div>
-            <p class="booking-price">Gesamtpreis <output id="buchung-preis">5,00 €</output></p>
-            <p>Mit deiner Buchung wird der Raum verbindlich reserviert. Hinweise zur Verarbeitung deiner Daten findest du unter <a href="datenschutz.html">Datenschutz</a>.</p>
-            <button name="buchen" type="submit" class="button button-dark" disabled>Zahlungspflichtig buchen</button>
-            <p id="buchung-status" class="feedback" role="alert"></p>
         </form>
         <section id="bestaetigung" class="note booking-confirmation" aria-labelledby="bestaetigung-titel" hidden>
             <h2 id="bestaetigung-titel" tabindex="-1">Dein Raum ist gebucht.</h2>

@@ -25,8 +25,10 @@ Im Render-Dashboard den Blueprint aus dem GitHub-Repository und dem gewünschten
 
 | Optionale Variable | Wirkung |
 | --- | --- |
-| `RESEND_API_KEY` und `BOOKING_FROM` | Sendet eine E-Mail-Bestätigung über Resend. Für `BOOKING_FROM` eine Absenderadresse aus einer beim Anbieter verifizierten Domain verwenden. Die Buchungsbestätigung im Browser ist unabhängig vom Versand. |
-| `PAYPAL_ME` | Nur den PayPal.Me-Namen des Vereins eintragen, zum Beispiel `meinverein`. Nach bestätigter Buchung erscheint ein PayPal-Zahlungslink mit Betrag. Der Vorstand gleicht eingegangene Zahlungen anhand der Buchungsnummer ab und markiert sie als bezahlt. Erstattungen erfolgen direkt beim Zahlungsanbieter. |
+| `RESEND_API_KEY` und `BOOKING_FROM` | Optionale Startwerte für E-Mail-Bestätigungen. |
+| `PAYPAL_ME` | Optionaler Startwert für den PayPal.Me-Namen des Vereins. |
 | `PUBLIC_URL` | Außerhalb von Render die öffentliche URL des Dienstes angeben. |
 
-Vor Öffnung des Kalenders für echte Buchungen die Rechtstexte mit den tatsächlichen Anbietern, Aufbewahrungsfristen und Vereinsdaten vervollständigen. Der Vorstand gibt Zeitfenster je Raum und Tag frei, kann freie Stunden sperren und sieht Buchungen sowie deren Zahlungsstatus im Admin-Bereich. Eine Stornierung gibt den Zeitraum wieder frei. Die buchende Person wird vom Vorstand über eine Stornierung informiert.
+Unter „Zahlung und E-Mail“ in der Buchungsverwaltung können der Vorstand PayPal.Me und Bestätigungs-E-Mails einrichten, einzeln ein- oder ausschalten und eine Test-E-Mail senden. Für E-Mails werden eine bei Resend verifizierte Absenderadresse und ein API-Schlüssel benötigt. Der Schlüssel wird verschlüsselt gespeichert und erscheint nach dem Speichern nicht mehr im Formular. Bei einem Wechsel von `SESSION_KEY` muss der Schlüssel erneut hinterlegt werden. Bei aktivem PayPal.Me erscheint nach der Buchung ein Zahlungslink mit Betrag. Der Vorstand gleicht eingegangene Zahlungen anhand der Buchungsnummer ab und markiert sie als bezahlt. Erstattungen erfolgen direkt beim Zahlungsanbieter.
+
+Vor Öffnung des Kalenders für echte Buchungen die Rechtstexte mit den tatsächlichen Anbietern, Aufbewahrungsfristen und Vereinsdaten vervollständigen. Der Vorstand gibt Zeitfenster je Raum und Tag frei, kann freie Stunden sperren und sieht Buchungen sowie deren Zahlungsstatus in der Monats- und Tagesübersicht. Eine Stornierung gibt den Zeitraum wieder frei. Die buchende Person wird vom Vorstand über eine Stornierung informiert.

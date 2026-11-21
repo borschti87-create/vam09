@@ -1,5 +1,5 @@
 import express from 'express';
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
@@ -10,12 +10,11 @@ const adminPassword = process.env.ADMIN_PASSWORD;
 const sessionKey = process.env.SESSION_KEY || randomBytes(32);
 const port = Number(process.env.PORT || 3000);
 const site = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL;
-const mailSettings = process.env.RESEND_API_KEY && process.env.BOOKING_FROM;
-const paypalName = /^[A-Za-z0-9]{1,40}$/.test(process.env.PAYPAL_ME || '') ? process.env.PAYPAL_ME : '';
 if (!adminPassword || adminPassword.length < 24) throw new Error('ADMIN_PASSWORD benötigt mindestens 24 Zeichen.');
 if (production && (!process.env.DATABASE_URL || !process.env.SESSION_KEY || !site)) {
     throw new Error('Im Produktionsbetrieb sind DATABASE_URL, SESSION_KEY und die öffentliche URL erforderlich.');
 }
+const settingsKey = createHmac('sha256', process.env.SESSION_KEY || adminPassword).update('vam09-settings-v1').digest();
 
 const postgres = process.env.DATABASE_URL
     ? new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 10000 })
@@ -45,6 +44,12 @@ const schema = `
         PRIMARY KEY (room, day, hour)
     );
     CREATE INDEX IF NOT EXISTS bookings_day ON bookings(day);
+    CREATE INDEX IF NOT EXISTS slots_day ON slots(day);
+    CREATE TABLE IF NOT EXISTS booking_settings (
+        id smallint PRIMARY KEY CHECK (id = 1),
+        settings jsonb NOT NULL DEFAULT '{}'::jsonb
+    );
+    INSERT INTO booking_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 `;
 await (localDb ? localDb.exec(schema) : postgres.query(schema));
 
@@ -88,6 +93,14 @@ function incrementDay(day, offset) {
     return new Date(Date.parse(day) + offset * 86400000).toISOString().slice(0, 10);
 }
 
+function monthRange(month) {
+    if (typeof month !== 'string' || !/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)) fail(400, 'Bitte einen gültigen Monat wählen.');
+    const start = `${month}-01`;
+    const end = new Date(Date.parse(start));
+    end.setUTCMonth(end.getUTCMonth() + 1);
+    return [start, end.toISOString().slice(0, 10)];
+}
+
 function slotInput(input) {
     const { room, day, hour } = input;
     if (!rooms.has(room) || !Number.isInteger(hour) || hour < 0 || hour > 23) fail(400, 'Raum oder Uhrzeit ungültig.');
@@ -104,6 +117,46 @@ function ensureFuture(day, hour) {
 function duration(value) {
     if (!Number.isInteger(value) || value < 1 || value > 8) fail(400, 'Bitte zwischen 1 und 8 Stunden wählen.');
     return value;
+}
+
+function startTimes(openHours, hours, earliest) {
+    const open = new Set(openHours);
+    return openHours.filter(hour => hour > earliest &&
+        Array.from({ length: hours }, (_, offset) => hour + offset).every(value => open.has(value)));
+}
+
+const paypalPattern = /^(?:(?:https:\/\/)?(?:www\.)?paypal\.(?:me\/|com\/paypalme\/))?([A-Za-z0-9]{1,40})\/?$/i;
+const emailPattern = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+const providerKeyPattern = /^re_[A-Za-z0-9_-]{8,200}$/;
+
+function seal(value) {
+    const nonce = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', settingsKey, nonce);
+    const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+    return Buffer.concat([nonce, cipher.getAuthTag(), encrypted]).toString('base64url');
+}
+
+function unseal(value) {
+    const encrypted = Buffer.from(value, 'base64url');
+    const cipher = createDecipheriv('aes-256-gcm', settingsKey, encrypted.subarray(0, 12));
+    cipher.setAuthTag(encrypted.subarray(12, 28));
+    return Buffer.concat([cipher.update(encrypted.subarray(28)), cipher.final()]).toString('utf8');
+}
+
+async function readSettings(client = db, lock = false) {
+    const { rows } = await client.query(`SELECT settings FROM booking_settings WHERE id=1${lock ? ' FOR UPDATE' : ''}`);
+    return rows[0].settings;
+}
+
+function displaySettings(saved) {
+    const paypal = saved.paypal ?? (process.env.PAYPAL_ME || '').match(paypalPattern)?.[1] ?? '';
+    const fallbackFrom = process.env.BOOKING_FROM ?? '';
+    const emailFrom = saved.emailFrom ?? (fallbackFrom.match(/<([^<>]+)>$/)?.[1] ?? fallbackFrom);
+    const emailKeySet = saved.emailKey === undefined ? Boolean(process.env.RESEND_API_KEY) : Boolean(saved.emailKey);
+    return {
+        paypal, paypalEnabled: saved.paypalEnabled ?? Boolean(paypal),
+        emailFrom, emailKeySet, emailEnabled: saved.emailEnabled ?? Boolean(emailFrom && emailKeySet)
+    };
 }
 
 function rateLimit(req, group, max, windowMs) {
@@ -167,16 +220,56 @@ app.get('/api/availability', async (req, res) => {
     const [today, currentHour] = roomDate();
     if (day < today || day > incrementDay(today, 365)) fail(400, 'Bitte einen Tag innerhalb der nächsten 365 Tage wählen.');
     const { rows } = await db.query('SELECT hour FROM slots WHERE room=$1 AND day=$2 AND booking_id IS NULL ORDER BY hour', [room, day]);
-    const open = new Set(rows.map(row => row.hour));
-    const starts = rows.map(row => row.hour).filter(hour => {
-        if (day === today && hour <= Number(currentHour)) return false;
-        return Array.from({ length: hours }, (_, offset) => hour + offset).every(value => open.has(value));
-    });
+    const starts = startTimes(rows.map(row => row.hour), hours, day === today ? Number(currentHour) : -1);
     res.json({ starts, cents: 500 + (hours - 1) * 300 });
 });
 
-async function confirmByEmail(booking) {
-    if (!mailSettings || booking.email_sent || booking.cancelled) return booking.email_sent;
+app.get('/api/calendar', async (req, res) => {
+    const [start, end] = monthRange(req.query.month);
+    const room = req.query.room;
+    if (!rooms.has(room)) fail(400, 'Bitte einen gültigen Raum wählen.');
+    const hours = duration(Number(req.query.hours));
+    const [today, currentHour] = roomDate();
+    const last = incrementDay(today, 365);
+    if (end <= today || start > last) fail(400, 'Bitte einen Monat innerhalb der nächsten 365 Tage wählen.');
+    const { rows } = await db.query(
+        'SELECT day::text, hour FROM slots WHERE room=$1 AND day >= $2 AND day < $3 AND booking_id IS NULL ORDER BY day, hour',
+        [room, start, end]
+    );
+    const grouped = new Map();
+    for (const { day, hour } of rows) {
+        if (day < today || day > last) continue;
+        if (!grouped.has(day)) grouped.set(day, []);
+        grouped.get(day).push(hour);
+    }
+    const days = {};
+    for (const [day, openHours] of grouped) {
+        const starts = startTimes(openHours, hours, day === today ? Number(currentHour) : -1);
+        if (starts.length) days[day] = starts;
+    }
+    res.json({ days, cents: 500 + (hours - 1) * 300 });
+});
+
+async function sendEmail(saved, to, subject, body, key) {
+    const settings = displaySettings(saved);
+    if (!settings.emailEnabled || !settings.emailFrom || !settings.emailKeySet) return false;
+    const token = saved.emailKey === undefined ? process.env.RESEND_API_KEY : saved.emailKey && unseal(saved.emailKey);
+    const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Idempotency-Key': key
+        },
+        body: JSON.stringify({ from: saved.emailFrom ?? process.env.BOOKING_FROM, to: [to], reply_to: 'info@vam09.de', subject, text: body }),
+        signal: AbortSignal.timeout(6500)
+    });
+    if (!response.ok) throw new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`);
+    return true;
+}
+
+async function confirmByEmail(booking, saved) {
+    if (booking.email_sent || booking.cancelled) return booking.email_sent;
     const text = [
         `Deine KuH-Buchung ${reference(booking.id)} ist bestätigt.`,
         `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 Uhr · ${booking.hours} Std.`,
@@ -184,23 +277,8 @@ async function confirmByEmail(booking) {
         'Bei Rückfragen erreichst du den Verein unter info@vam09.de.'
     ].join('\n');
     try {
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-                'Content-Type': 'application/json',
-                'Idempotency-Key': `kuh-booking/${booking.id}`
-            },
-            body: JSON.stringify({
-                from: process.env.BOOKING_FROM,
-                to: [booking.email],
-                reply_to: 'info@vam09.de',
-                subject: `Deine KuH-Buchung ${reference(booking.id)}`,
-                text
-            }),
-            signal: AbortSignal.timeout(6500)
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${reference(booking.id)}`, text, `kuh-booking/${booking.id}`);
+        if (!sent) return false;
         await db.query('UPDATE bookings SET email_sent=true WHERE id=$1', [booking.id]);
         return true;
     } catch (error) {
@@ -244,10 +322,13 @@ app.post('/api/bookings', async (req, res) => {
         if (rows.length !== hours) fail(409, 'Diese Zeit ist inzwischen vergeben. Bitte wähle einen anderen Termin.');
         return insert.rows[0];
     });
-    const emailSent = await confirmByEmail(booking);
+    const saved = await readSettings();
+    const settings = displaySettings(saved);
+    const emailSent = await confirmByEmail(booking, saved);
     res.status(201).json({
         reference: reference(booking.id), room: rooms.get(room), day, hour, hours, cents, emailSent,
-        paypal: paypalName && !booking.paid ? `https://www.paypal.com/paypalme/${paypalName}/${(cents / 100).toFixed(2)}EUR` : null
+        paypal: settings.paypalEnabled && settings.paypal && !booking.paid
+            ? `https://www.paypal.com/paypalme/${settings.paypal}/${(cents / 100).toFixed(2)}EUR` : null
     });
 });
 
@@ -266,6 +347,60 @@ app.get('/api/admin/session', (req, res) => res.json({ ok: true }));
 app.post('/api/admin/logout', (req, res) => {
     res.clearCookie('kuh_admin', cookieOptions);
     res.json({ ok: true });
+});
+app.get('/api/admin/settings', async (req, res) => res.json(displaySettings(await readSettings())));
+app.post('/api/admin/settings', async (req, res) => {
+    const { paypalEnabled, emailEnabled, removeEmailKey } = req.body || {};
+    const paypalInput = typeof req.body?.paypal === 'string' ? req.body.paypal.trim() : '';
+    const paypal = paypalInput.match(paypalPattern)?.[1] ?? '';
+    const emailFrom = typeof req.body?.emailFrom === 'string' ? req.body.emailFrom.trim() : '';
+    const emailKey = typeof req.body?.emailKey === 'string' ? req.body.emailKey.trim() : '';
+    if (typeof paypalEnabled !== 'boolean' || typeof emailEnabled !== 'boolean' || typeof removeEmailKey !== 'boolean') {
+        fail(400, 'Bitte gültige Einstellungen übergeben.');
+    }
+    if ((paypalInput || paypalEnabled) && !paypal) fail(400, 'Bitte einen gültigen PayPal.Me-Namen oder -Link eingeben.');
+    if ((emailFrom || emailEnabled) && (emailFrom.length > 254 || !emailPattern.test(emailFrom))) {
+        fail(400, 'Bitte eine gültige Absenderadresse eingeben.');
+    }
+    if (emailKey && (!providerKeyPattern.test(emailKey) || removeEmailKey)) fail(400, 'Bitte einen gültigen Resend-API-Schlüssel eingeben oder den bisherigen entfernen.');
+    const updated = await transaction(async client => {
+        const current = await readSettings(client, true);
+        const next = { ...current, paypal, paypalEnabled, emailFrom, emailEnabled };
+        if (removeEmailKey) next.emailKey = null;
+        if (emailKey) next.emailKey = seal(emailKey);
+        const result = displaySettings(next);
+        if (emailEnabled && !result.emailKeySet) fail(400, 'Für E-Mail-Bestätigungen ist ein Resend-API-Schlüssel erforderlich.');
+        await client.query('UPDATE booking_settings SET settings=$1::jsonb WHERE id=1', [JSON.stringify(next)]);
+        return result;
+    });
+    res.json(updated);
+});
+app.post('/api/admin/test-email', async (req, res) => {
+    rateLimit(req, 'mail-test', 5, 60 * 60 * 1000);
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    if (email.length > 254 || !emailPattern.test(email)) fail(400, 'Bitte eine gültige Test-E-Mail-Adresse eingeben.');
+    const saved = await readSettings();
+    if (!displaySettings(saved).emailEnabled) fail(400, 'Bitte den E-Mail-Versand zuerst aktivieren und speichern.');
+    try {
+        const sent = await sendEmail(saved, email, 'KuH: Test der Buchungsbestätigung',
+            'Der E-Mail-Versand für die KuH-Raumbuchung ist eingerichtet.', `kuh-test/${randomBytes(16).toString('hex')}`);
+        if (!sent) fail(502, 'Der E-Mail-Versand ist nicht vollständig eingerichtet.');
+    } catch {
+        return res.status(502).json({ error: 'Die Test-E-Mail konnte nicht gesendet werden. Bitte prüfe Absender und Resend-Schlüssel.' });
+    }
+    res.json({ ok: true });
+});
+app.get('/api/admin/month', async (req, res) => {
+    const [start, end] = monthRange(req.query.month);
+    const [times, bookings] = await Promise.all([
+        db.query(`SELECT day::text, COUNT(*)::int AS free FROM slots
+                  WHERE day >= $1 AND day < $2 AND booking_id IS NULL GROUP BY day ORDER BY day`, [start, end]),
+        db.query(`SELECT day::text, COUNT(*) FILTER (WHERE NOT cancelled)::int AS booked,
+                  COUNT(*) FILTER (WHERE NOT cancelled AND NOT paid)::int AS unpaid,
+                  COUNT(*) FILTER (WHERE cancelled)::int AS cancelled
+                  FROM bookings WHERE day >= $1 AND day < $2 GROUP BY day ORDER BY day`, [start, end])
+    ]);
+    res.json({ times: times.rows, bookings: bookings.rows });
 });
 app.get('/api/admin/schedule', async (req, res) => {
     const day = dateValue(req.query.day);
