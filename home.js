@@ -31,17 +31,15 @@ compact.addEventListener('change', updateLayout);
 updateLayout();
 
 const photoDialog = document.querySelector('#raumfoto-dialog');
-const photoTitle = document.querySelector('#raumfoto-titel');
 const photoBody = photoDialog.querySelector('.photo-dialog-body');
 const photo = document.createElement('img');
-photo.alt = '';
 
 document.querySelectorAll('.room-gallery a').forEach(link => {
     link.addEventListener('click', event => {
         if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
             typeof photoDialog.showModal !== 'function') return;
         event.preventDefault();
-        photoTitle.textContent = link.querySelector('span').textContent;
+        photo.alt = link.querySelector('img').alt;
         photo.src = link.href;
         photoBody.replaceChildren(photo);
         photoDialog.showModal();

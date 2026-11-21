@@ -289,6 +289,8 @@ address { font-style: normal; }
 
 .home-header .header-inner { min-height: 5.45rem; gap: .8rem 1.3rem; }
 .header-brands { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .9rem; }
+.vam-brand { flex: none; display: block; }
+.vam-brand img { width: clamp(5.1rem, 8vw, 7rem); height: auto; mix-blend-mode: multiply; }
 .kuh-brand {
     display: inline-flex;
     align-items: center;
@@ -333,6 +335,7 @@ address { font-style: normal; }
     }
     .home-header .desktop-member-link { display: none; }
     .home-header .header-brands { flex-wrap: nowrap; gap: .5rem; }
+    .home-header .vam-brand img { width: 4.35rem; }
     .home-header .kuh-brand { padding-inline-start: .55rem; font-size: .84rem; }
     .home-header .kuh-brand img { width: 3.05rem; }
     .home-header .social-links { justify-content: flex-end; gap: .2rem; }
@@ -454,7 +457,6 @@ address { font-style: normal; }
     padding: 0;
     margin: 1.2rem 0 0;
 }
-.room-gallery li:only-child { grid-column: 1 / -1; }
 .room-gallery a {
     display: block;
     border: 1px solid var(--rule);
@@ -462,12 +464,8 @@ address { font-style: normal; }
     overflow: hidden;
     text-decoration: none;
 }
-.room-gallery a:hover span { text-decoration: underline; }
-.room-gallery img { width: 100%; height: clamp(7rem, 22vw, 11rem); object-fit: cover; object-position: center 58%; }
-.room-gallery span { display: block; padding: .4rem .55rem; font-size: .875rem; font-weight: 680; }
-@media (width <= 22rem) {
-    .room-gallery span { padding-inline: .4rem; overflow-wrap: anywhere; }
-}
+.room-gallery a:hover { border-color: var(--rust); }
+.room-gallery img { width: 100%; height: clamp(6.5rem, 16vw, 10rem); object-fit: cover; object-position: center 58%; }
 .photo-dialog {
     width: min(calc(100% - 1.5rem), 46rem);
     max-height: calc(100% - 1.5rem);
@@ -478,7 +476,6 @@ address { font-style: normal; }
     background: var(--white);
 }
 .photo-dialog::backdrop { background: rgb(33 27 26 / .8); }
-.photo-dialog-header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .65rem; }
-.photo-dialog h2 { font-size: clamp(1.05rem, 3vw, 1.45rem); letter-spacing: -.03em; }
+.photo-dialog-header { display: flex; justify-content: end; margin-bottom: .65rem; }
 .photo-dialog button { font-family: inherit; cursor: pointer; }
 .photo-dialog img { width: auto; height: auto; max-width: 100%; max-height: 76dvh; margin-inline: auto; border-radius: .45rem; }
