@@ -103,8 +103,9 @@ class OpenFoodFacts(
             product.optString("product_name"), product.optString("brands"), pack, unit,
             (kcal ?: converted).takeIf { usable }, nutrient("proteins", 100.0).takeIf { usable },
             nutrient("carbohydrates", 100.0).takeIf { usable }, nutrient("fat", 100.0).takeIf { usable },
-            "off", System.currentTimeMillis(), converted != null && usable,
-            nutrient("fiber", 100.0).takeIf { usable }, nutrient("sugars", 100.0).takeIf { usable },
-            nutrient("salt", 100.0).takeIf { usable }))
+            "off", System.currentTimeMillis(), converted = converted != null && usable,
+            fiber = nutrient("fiber", 100.0).takeIf { usable },
+            sugar = nutrient("sugars", 100.0).takeIf { usable },
+            salt = nutrient("salt", 100.0).takeIf { usable }))
     }
 }
