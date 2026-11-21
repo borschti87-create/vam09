@@ -246,11 +246,12 @@ monthInput.addEventListener('change', loadMonth);
 login.addEventListener('submit', async event => {
     event.preventDefault();
     try {
-        await api('/api/admin/login', { password: login.elements.password.value });
+        await api('/api/admin/login', { username: login.elements.username.value, password: login.elements.password.value });
         login.reset();
         message.textContent = '';
         await showPanel();
     } catch (error) {
+        login.elements.password.value = '';
         showError(error, false);
     }
 });

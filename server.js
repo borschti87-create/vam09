@@ -6,11 +6,13 @@ import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
 
 const production = process.env.NODE_ENV === 'production';
+const adminUsername = (process.env.ADMIN_USERNAME || 'vam09-vorstand').trim().toLowerCase();
 const adminPassword = process.env.ADMIN_PASSWORD;
 const sessionKey = process.env.SESSION_KEY || randomBytes(32);
 const port = Number(process.env.PORT || 3000);
 const site = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL;
 if (!adminPassword || adminPassword.length < 24) throw new Error('ADMIN_PASSWORD benötigt mindestens 24 Zeichen.');
+if (!/^[a-z0-9_.-]{3,64}$/.test(adminUsername)) throw new Error('ADMIN_USERNAME benötigt 3 bis 64 Zeichen aus a–z, 0–9, Punkt, Unter- oder Bindestrich.');
 if (production && (!process.env.DATABASE_URL || !process.env.SESSION_KEY || !site)) {
     throw new Error('Im Produktionsbetrieb sind DATABASE_URL, SESSION_KEY und die öffentliche URL erforderlich.');
 }
@@ -177,8 +179,10 @@ function rateLimit(req, group, max, windowMs) {
     limited.set(key, entry);
 }
 
+const adminSessionKey = createHmac('sha256', sessionKey).update(JSON.stringify(['kuh-admin', adminUsername, adminPassword])).digest();
+
 function sign(value) {
-    return createHmac('sha256', sessionKey).update(value).digest('base64url');
+    return createHmac('sha256', adminSessionKey).update(value).digest('base64url');
 }
 
 function matches(left, right) {
@@ -341,8 +345,11 @@ app.post('/api/bookings', async (req, res) => {
 const cookieOptions = { httpOnly: true, sameSite: 'strict', secure: production, path: '/api/admin' };
 app.post('/api/admin/login', (req, res) => {
     rateLimit(req, 'login', 8, 15 * 60 * 1000);
-    const password = req.body?.password;
-    if (typeof password !== 'string' || !matches(password, adminPassword)) fail(401, 'Das Passwort stimmt nicht.');
+    const username = typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const usernameMatches = matches(username, adminUsername);
+    const passwordMatches = matches(password, adminPassword);
+    if (!usernameMatches || !passwordMatches) fail(401, 'Die Anmeldedaten stimmen nicht.');
     const expires = Date.now() + 8 * 60 * 60 * 1000;
     const value = `${expires}.${randomBytes(16).toString('hex')}`;
     res.cookie('kuh_admin', `${value}.${sign(value)}`, { ...cookieOptions, expires: new Date(expires) });
@@ -453,7 +460,7 @@ app.post('/api/admin/bookings/:id', async (req, res) => {
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const pages = ['index.html', 'buchung.html', 'admin.html', 'archiv.html', 'impressum.html', 'datenschutz.html', 'satzung.html'];
-const files = [...pages, 'style.css', 'buchung.js', 'admin.js'];
+const files = [...pages, 'style.css', 'buchung.js', 'admin.js', 'home.js'];
 app.get('/', (req, res) => res.sendFile(join(root, 'index.html')));
 for (const file of files) app.get(`/${file}`, (req, res) => res.sendFile(join(root, file)));
 for (const dir of ['assets', 'downloads']) app.use(`/${dir}`, express.static(join(root, dir), { index: false }));

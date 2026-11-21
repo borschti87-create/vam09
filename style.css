@@ -307,15 +307,6 @@ address { font-style: normal; }
 .home-header .nav-booking { color: var(--rust); }
 .footer-cookie-note { margin-inline: auto; padding-block: .6rem 1rem; border-top: 1px solid #62524c; font-size: .875rem; }
 
-@media (max-width: 50rem) {
-    .home-header .header-inner { flex-wrap: wrap; padding-block: .75rem; }
-    .home-header .header-inner nav { order: 1; width: 100%; gap: .25rem 1rem; }
-    .social-links { justify-content: start; }
-}
-@media (max-width: 25rem) {
-    .social-links { column-gap: .65rem; }
-}
-
 .checkout-summary {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -330,3 +321,84 @@ address { font-style: normal; }
 .checkout-summary .booking-price { margin: 0; }
 .checkout-summary .booking-price output { margin: 0; }
 .booking-payment { font-size: .95rem; }
+
+.mobile-menu, .home-header .mobile-member-link { display: none; }
+
+@media (max-width: 50rem) {
+    .home-header .header-inner {
+        flex-wrap: wrap;
+        min-height: 0;
+        gap: .35rem .65rem;
+        justify-content: space-between;
+        padding-block: .5rem;
+    }
+    .home-header .desktop-member-link { display: none; }
+    .home-header .header-brands { flex-wrap: nowrap; gap: .5rem; }
+    .home-header .kuh-brand { padding-inline-start: .55rem; font-size: .84rem; }
+    .home-header .kuh-brand img { width: 3.05rem; }
+    .home-header .social-links { justify-content: flex-end; gap: .2rem; }
+    .home-header .social-links a { justify-content: center; width: 2.75rem; min-height: 2.75rem; }
+    .home-header .social-links .social-name {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+    .mobile-menu {
+        display: inline-flex;
+        gap: .45rem;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+        padding: .45rem .65rem;
+        border: 1px solid var(--rule);
+        border-radius: .6rem;
+        background: var(--white);
+        color: var(--ink);
+        font: inherit;
+        font-size: .9rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .mobile-menu-icon {
+        width: 1.05rem;
+        height: .85rem;
+        border-block: 2px solid currentColor;
+        background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
+    }
+    .home-header .header-inner nav {
+        order: 1;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .3rem;
+        margin-top: .35rem;
+        padding: .35rem;
+        background: var(--white);
+        border: 1px solid var(--rule);
+        border-radius: .7rem;
+    }
+    .home-header .header-inner nav a {
+        display: flex;
+        align-items: center;
+        min-height: 2.75rem;
+        padding: .5rem .6rem;
+        border-radius: .45rem;
+    }
+    .home-header .header-inner nav a:focus-visible { outline-offset: -.1rem; }
+}
+@media (max-width: 22rem) {
+    .mobile-menu-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}

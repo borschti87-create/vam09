@@ -5,6 +5,7 @@ import { once } from 'node:events';
 import { test } from 'node:test';
 
 const password = 'nur-fuer-den-lokalen-buchungstest-2026';
+const username = 'test-vorstand';
 const tomorrow = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().slice(0, 10);
 const urlQuery = new URLSearchParams({ room: 'proberaum', day: tomorrow, hours: '2' });
 const month = tomorrow.slice(0, 7);
@@ -27,6 +28,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
         env: {
             PATH: globalThis.process.env.PATH,
             ADMIN_PASSWORD: password,
+            ADMIN_USERNAME: username,
             PORT: '0',
             BIND_HOST: '127.0.0.1',
             LOCAL_DB_PATH: 'memory://',
@@ -69,10 +71,17 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal((await fetch(origin + '/downloads/mitgliedsantrag.pdf')).status, 200);
     assert.equal((await api(`/api/admin/schedule?day=${tomorrow}`)).status, 401);
     assert.equal((await fetch(origin + '/api/admin/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password })
     })).status, 403);
-    assert.equal((await api('/api/admin/login', 'POST', { password: 'wrong' })).status, 401);
-    const auth = await api('/api/admin/login', 'POST', { password });
+    const missingName = await api('/api/admin/login', 'POST', { password });
+    const wrongName = await api('/api/admin/login', 'POST', { username: 'wrong', password });
+    const wrongPassword = await api('/api/admin/login', 'POST', { username, password: 'wrong' });
+    for (const rejected of [missingName, wrongName, wrongPassword]) {
+        assert.equal(rejected.status, 401);
+        assert.equal(rejected.body.error, 'Die Anmeldedaten stimmen nicht.');
+        assert.equal(rejected.headers.get('set-cookie'), null);
+    }
+    const auth = await api('/api/admin/login', 'POST', { username: username.toUpperCase(), password });
     assert.equal(auth.status, 200);
     cookie = auth.headers.get('set-cookie').split(';')[0];
     const savedSettings = { paypal: 'paypal.me/TestVerein', paypalEnabled: true,

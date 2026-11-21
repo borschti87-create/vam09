@@ -8,15 +8,16 @@
     <meta name="referrer" content="no-referrer">
     <title>VAM 09 · Musik und Kultur in Staßfurt</title>
     <link rel="stylesheet" href="style.css">
+    <script src="home.js" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#home">Zum Inhalt</a>
     <header class="site-header home-header">
         <div class="social-bar">
             <nav class="shell social-links" aria-label="Soziale Medien">
-                <a href="https://www.facebook.com/VAM2009/" rel="noreferrer"><span class="social-icon facebook-icon" aria-hidden="true">f</span>Facebook</a>
-                <a href="https://www.instagram.com/vam_2009/" rel="noreferrer"><span class="social-icon instagram-icon" aria-hidden="true"></span>Instagram</a>
-                <a href="https://www.youtube.com/@VAM2009" rel="noreferrer"><span class="social-icon youtube-icon" aria-hidden="true"></span>YouTube</a>
+                <a href="https://www.facebook.com/VAM2009/" rel="noreferrer"><span class="social-icon facebook-icon" aria-hidden="true">f</span><span class="social-name">Facebook</span></a>
+                <a href="https://www.instagram.com/vam_2009/" rel="noreferrer"><span class="social-icon instagram-icon" aria-hidden="true"></span><span class="social-name">Instagram</span></a>
+                <a href="https://www.youtube.com/@VAM2009" rel="noreferrer"><span class="social-icon youtube-icon" aria-hidden="true"></span><span class="social-name">YouTube</span></a>
             </nav>
         </div>
         <div class="shell header-inner">
@@ -27,13 +28,17 @@
                     <span>Kultur- und<br>Innovationshof</span>
                 </a>
             </div>
-            <nav aria-label="Hauptnavigation">
+            <button id="mobile-menu" class="mobile-menu" type="button" aria-controls="hauptnavigation" aria-expanded="false" hidden>
+                <span class="mobile-menu-icon" aria-hidden="true"></span><span class="mobile-menu-label">Menü</span>
+            </button>
+            <nav id="hauptnavigation" aria-label="Hauptnavigation">
                 <a class="nav-booking" href="buchung.html">Raum buchen</a>
                 <a href="#angebote">Angebote</a>
                 <a href="#about">Verein</a>
                 <a href="#events">Termine</a>
+                <a class="mobile-member-link" href="downloads/mitgliedsantrag.pdf">Mitgliedsantrag (PDF)</a>
             </nav>
-            <a class="button button-small button-dark" href="downloads/mitgliedsantrag.pdf">Mitmachen <span class="visually-hidden">(PDF-Mitgliedsantrag)</span></a>
+            <a class="button button-small button-dark desktop-member-link" href="downloads/mitgliedsantrag.pdf">Mitmachen <span class="visually-hidden">(PDF-Mitgliedsantrag)</span></a>
         </div>
     </header>
     <main id="home">
