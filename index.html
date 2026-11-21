@@ -78,6 +78,12 @@
                             <p>Für Bands, Solo-Musikerinnen und -Musiker und alle, die bei einer Session Neues ausprobieren wollen.</p>
                             <p class="price"><strong>5 €</strong> erste Stunde · <strong>3 €</strong> je weitere Stunde</p>
                             <a class="text-link" href="buchung.html?raum=proberaum">Proberaum buchen</a>
+                            <ul class="room-gallery" aria-label="Fotos vom Proberaum">
+                                <li><a href="assets/kuh-proberaum-sofa.webp">
+                                    <img src="assets/kuh-proberaum-sofa.webp" alt="" width="960" height="1280" loading="lazy">
+                                    <span>Sitzecke und Verstärker</span>
+                                </a></li>
+                            </ul>
                         </div>
                     </article>
                     <article class="project-card" id="werkstatt">
@@ -87,6 +93,16 @@
                             <p>Repariere ein Instrument, baue ein Möbelstück oder bring dein nächstes Upcycling-Projekt mit.</p>
                             <p class="price"><strong>5 €</strong> erste Stunde · <strong>3 €</strong> je weitere Stunde</p>
                             <a class="text-link" href="buchung.html?raum=werkstatt">Werkstatt buchen</a>
+                            <ul class="room-gallery" aria-label="Fotos von der Werkstatt">
+                                <li><a href="assets/kuh-werkstatt-instrumente.webp">
+                                    <img src="assets/kuh-werkstatt-instrumente.webp" alt="" width="1050" height="1259" loading="lazy">
+                                    <span>Instrumente und Geräte</span>
+                                </a></li>
+                                <li><a href="assets/kuh-werkstatt-gitarre.webp">
+                                    <img src="assets/kuh-werkstatt-gitarre.webp" alt="" width="960" height="1280" loading="lazy">
+                                    <span>Gitarre auf der Werkbank</span>
+                                </a></li>
+                            </ul>
                         </div>
                     </article>
                 </div>
@@ -208,6 +224,15 @@
             </div>
         </section>
     </main>
+    <dialog class="photo-dialog" id="raumfoto-dialog" aria-labelledby="raumfoto-titel">
+        <div class="photo-dialog-header">
+            <h2 id="raumfoto-titel"></h2>
+            <form method="dialog">
+                <button class="button button-small button-line" type="submit">Schließen</button>
+            </form>
+        </div>
+        <div class="photo-dialog-body"></div>
+    </dialog>
     <footer class="site-footer">
         <div class="shell footer-inner">
             <a class="wordmark" href="#home" aria-label="VAM 09, zum Seitenanfang">VAM<span>09</span><span class="mark-dot">.</span></a>
