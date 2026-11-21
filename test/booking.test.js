@@ -92,7 +92,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal((await api('/api/admin/slots', 'POST', { ...slot, open: true }, true)).status, 200);
     assert.deepEqual((await api(`/api/availability?${urlQuery}`)).body, { starts: [16, 17, 18], cents: 800 });
     const calendar = `/api/calendar?room=proberaum&month=${month}&hours=2`;
-    assert.deepEqual((await api(calendar)).body, { days: { [tomorrow]: [16, 17, 18] }, cents: 800 });
+    assert.deepEqual((await api(calendar)).body, { days: { [tomorrow]: [16, 17, 18] }, cents: 800, paypalAvailable: true });
     assert.equal((await api('/api/calendar?room=proberaum&month=2026-15&hours=2')).status, 400);
 
     const base = { ...slot, hour: 17, hours: 2, name: 'Test', email: 'booking@example.invalid' };
@@ -124,6 +124,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.deepEqual((await api(`/api/availability?${urlQuery}`)).body.starts, [16, 17, 18]);
     const off = await api('/api/admin/settings', 'POST', { ...savedSettings, emailKey: '', emailEnabled: false, paypalEnabled: false }, true);
     assert.equal(off.body.emailKeySet, true);
+    assert.equal((await api(calendar)).body.paypalAvailable, false);
     assert.equal((await api('/api/admin/test-email', 'POST', { email: 'board@example.invalid' }, true)).status, 400);
     const noIntegrations = await api('/api/bookings', 'POST', { ...base, id: randomUUID(), hour: 16 });
     assert.equal(noIntegrations.status, 201);

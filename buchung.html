@@ -21,6 +21,7 @@
         <p class="eyebrow">Kultur- und Innovationshof</p>
         <h1>Raum buchen.</h1>
         <p>Die erste Stunde kostet 5 €, jede weitere 3 €. Wähle Raum, Datum und Dauer, um die freien Startzeiten zu sehen.</p>
+        <p id="buchung-zahlung" class="booking-payment">Fragen zur Zahlung beantwortet der Verein unter <a href="mailto:info@vam09.de">info@vam09.de</a>.</p>
         <noscript><p class="note">Für Live-Verfügbarkeit und Buchungen ist JavaScript erforderlich.</p></noscript>
         <form id="buchungsformular" class="booking-form" autocomplete="on">
             <fieldset class="booking-controls">
@@ -53,8 +54,13 @@
                         <label>Name <input name="name" autocomplete="name" maxlength="100" required></label>
                         <label>E-Mail <input name="email" type="email" autocomplete="email" maxlength="254" required></label>
                     </div>
-                    <p class="booking-price">Gesamtpreis <output id="buchung-preis">5,00 €</output></p>
-                    <p>Die Buchung reserviert den Raum verbindlich. <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
+                    <dl class="checkout-summary" aria-label="Buchungsdaten prüfen">
+                        <div><dt>Raum</dt><dd id="buchung-raum">Proberaum</dd></div>
+                        <div><dt>Datum</dt><dd id="buchung-datum">Noch nicht gewählt</dd></div>
+                        <div><dt>Zeitraum</dt><dd id="buchung-zeitraum">Noch nicht gewählt</dd></div>
+                        <div class="booking-price"><dt>Gesamtpreis</dt><dd><output id="buchung-preis">5,00 €</output></dd></div>
+                    </dl>
+                    <p>Du kannst die Angaben vor dem Absenden ändern. Die Buchung reserviert den Raum verbindlich. <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
                     <button name="buchen" type="submit" class="button button-dark" disabled>Zahlungspflichtig buchen</button>
                     <p id="buchung-status" class="feedback" role="alert"></p>
                 </section>
@@ -65,7 +71,10 @@
             <p id="bestaetigung-daten"></p>
             <p id="bestaetigung-mail"></p>
             <p id="bestaetigung-paypal-hinweis" hidden>Wenn du per PayPal zahlst, gib bitte die Buchungsnummer im Zahlungsbetreff an. Der Verein gleicht die Zahlung ab.</p>
-            <a id="bestaetigung-paypal" class="button button-dark" href="#" rel="noreferrer" hidden>Mit PayPal bezahlen</a>
+            <div class="actions">
+                <button id="bestaetigung-download" class="button button-line" type="button">Bestätigung herunterladen</button>
+                <a id="bestaetigung-paypal" class="button button-dark" href="#" rel="noreferrer" hidden>Mit PayPal bezahlen</a>
+            </div>
         </section>
     </main>
     <footer class="site-footer">
@@ -74,6 +83,7 @@
             <div class="footer-links">
                 <a href="impressum.html">Impressum</a>
                 <a href="datenschutz.html">Datenschutz</a>
+                <a href="datenschutz.html#cookies">Cookie-Hinweise</a>
             </div>
         </div>
     </footer>

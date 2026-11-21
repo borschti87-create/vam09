@@ -11,9 +11,16 @@ const previous = document.querySelector('#monat-zurueck');
 const next = document.querySelector('#monat-weiter');
 const dateLabel = document.querySelector('#termin-datum');
 const times = document.querySelector('#termin-zeiten');
+const summaryRoom = document.querySelector('#buchung-raum');
+const summaryDate = document.querySelector('#buchung-datum');
+const summaryTime = document.querySelector('#buchung-zeitraum');
+const paymentNotice = document.querySelector('#buchung-zahlung');
+const paymentDescription = document.createTextNode('');
+paymentNotice.prepend(paymentDescription);
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const monthLabel = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const fullDate = new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeZone: 'UTC' });
+const roomLabels = { proberaum: 'Proberaum', werkstatt: 'DIY-Werkstatt' };
 
 const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -28,6 +35,7 @@ let availability = {};
 let calendarRequest;
 let pendingBooking;
 let submitting = false;
+let confirmation;
 
 const requestedRoom = new URLSearchParams(location.search).get('raum');
 if (['proberaum', 'werkstatt'].includes(requestedRoom)) room.value = requestedRoom;
@@ -47,6 +55,9 @@ function renderTimes() {
     selectedHour = undefined;
     submit.disabled = true;
     dateLabel.textContent = selectedDay ? fullDate.format(new Date(selectedDay)) : 'Wähle einen verfügbaren Tag.';
+    summaryRoom.textContent = roomLabels[room.value];
+    summaryDate.textContent = selectedDay ? fullDate.format(new Date(selectedDay)) : 'Noch nicht gewählt';
+    summaryTime.textContent = 'Noch nicht gewählt';
     times.replaceChildren();
     for (const hour of availability[selectedDay] || []) {
         const button = document.createElement('button');
@@ -56,6 +67,7 @@ function renderTimes() {
         button.setAttribute('aria-pressed', 'false');
         button.addEventListener('click', () => {
             selectedHour = hour;
+            summaryTime.textContent = `${timeLabel(hour)}–${timeLabel(hour + hours.valueAsNumber)} Uhr`;
             submit.disabled = false;
             for (const option of times.children) option.setAttribute('aria-pressed', String(option === button));
         });
@@ -114,6 +126,7 @@ async function loadCalendar() {
         availability = result.days;
         if (!availability[selectedDay]) selectedDay = '';
         price.value = currency.format(result.cents / 100);
+        paymentDescription.textContent = result.paypalAvailable ? 'Zahlung per PayPal nach der Buchung möglich. ' : '';
         calendarStatus.textContent = Object.keys(availability).length ? '' : 'In diesem Monat sind für diese Dauer keine Termine frei.';
         renderCalendar();
     } catch (error) {
@@ -133,6 +146,17 @@ previous.addEventListener('click', () => moveMonth(-1));
 next.addEventListener('click', () => moveMonth(1));
 for (const choice of room) choice.addEventListener('change', loadCalendar);
 hours.addEventListener('input', loadCalendar);
+
+document.querySelector('#bestaetigung-download').addEventListener('click', () => {
+    if (!confirmation) return;
+    const file = new Blob([confirmation.text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `KuH-Buchung-${confirmation.reference}.txt`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 
 form.addEventListener('submit', async event => {
     event.preventDefault();
@@ -154,8 +178,22 @@ form.addEventListener('submit', async event => {
             body: JSON.stringify({ ...payload, id: pendingBooking.id })
         });
         const formattedDate = result.day.split('-').reverse().join('.');
+        const timeRange = `${timeLabel(result.hour)}–${timeLabel(result.hour + result.hours)} Uhr`;
+        const total = currency.format(result.cents / 100);
         document.querySelector('#bestaetigung-daten').textContent =
-            `Buchungsnummer ${result.reference} · ${result.room} · ${formattedDate}, ${timeLabel(result.hour)} Uhr · ${result.hours} Std. · ${currency.format(result.cents / 100)}`;
+            `Buchungsnummer ${result.reference} · ${result.room} · ${formattedDate}, ${timeRange} · ${result.hours} Std. · ${total}`;
+        confirmation = {
+            reference: result.reference,
+            text: [
+                'Buchungsbestätigung – Verein Aktiver Musiker 2009 e. V.',
+                `Buchungsnummer: ${result.reference}`,
+                `Raum: ${result.room}`,
+                `Termin: ${formattedDate}, ${timeRange} (Ortszeit)`,
+                `Gesamtpreis: ${total}`,
+                `Zahlung: ${result.paypal || 'Bitte Zahlungsdetails beim Verein erfragen.'}`,
+                'Kontakt: info@vam09.de · +49 157 86890347'
+            ].join('\n')
+        };
         document.querySelector('#bestaetigung-mail').textContent = result.emailSent
             ? 'Eine Bestätigung wurde per E-Mail verschickt.'
             : 'Speichere deine Buchungsnummer für Rückfragen an info@vam09.de.';

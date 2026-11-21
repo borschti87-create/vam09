@@ -11,11 +11,24 @@
 </head>
 <body>
     <a class="skip-link" href="#home">Zum Inhalt</a>
-    <header class="site-header">
+    <header class="site-header home-header">
+        <div class="social-bar">
+            <nav class="shell social-links" aria-label="Soziale Medien">
+                <a href="https://www.facebook.com/VAM2009/" rel="noreferrer"><span class="social-icon facebook-icon" aria-hidden="true">f</span>Facebook</a>
+                <a href="https://www.instagram.com/vam_2009/" rel="noreferrer"><span class="social-icon instagram-icon" aria-hidden="true"></span>Instagram</a>
+                <a href="https://www.youtube.com/@VAM2009" rel="noreferrer"><span class="social-icon youtube-icon" aria-hidden="true"></span>YouTube</a>
+            </nav>
+        </div>
         <div class="shell header-inner">
-            <a class="wordmark" href="#home" aria-label="VAM 09, Startseite">VAM<span>09</span><span class="mark-dot">.</span></a>
+            <div class="header-brands">
+                <a class="wordmark" href="#home" aria-label="VAM 09, Startseite">VAM<span>09</span><span class="mark-dot">.</span></a>
+                <a class="kuh-brand" href="#kuh">
+                    <img src="assets/kuh-logo.webp" alt="" width="475" height="349">
+                    <span>Kultur- und<br>Innovationshof</span>
+                </a>
+            </div>
             <nav aria-label="Hauptnavigation">
-                <a href="#kuh">KuH-Projekt</a>
+                <a class="nav-booking" href="buchung.html">Raum buchen</a>
                 <a href="#angebote">Angebote</a>
                 <a href="#about">Verein</a>
                 <a href="#events">Termine</a>
@@ -48,9 +61,8 @@
                         <h2 id="kuh-title">Kultur- und<br>Innovationshof<span class="mark-dot">.</span></h2>
                     </div>
                     <div>
-                        <p>Im KuH geht es über Musik hinaus. Hier entsteht ein Ort, an dem du einen Song entwickeln, Instrumente reparieren oder eine eigene Idee für die Region umsetzen kannst.</p>
+                        <p>Im KuH geht es über Musik hinaus. Hier kannst du proben, Instrumente reparieren oder eigene Projekte umsetzen. Der Kultur- und Innovationshof entsteht als Ort, an dem Menschen aus der Region ihre Ideen von der ersten Skizze bis zur Umsetzung gemeinsam entwickeln können.</p>
                         <blockquote>„Räume machen Menschen, Menschen machen Räume.“</blockquote>
-                        <img class="kuh-logo" src="assets/kuh-logo.webp" alt="Logo des Kultur- und Innovationshofs" width="475" height="349" loading="lazy">
                     </div>
                 </div>
                 <div class="project-grid">
@@ -195,14 +207,13 @@
         <div class="shell footer-inner">
             <a class="wordmark" href="#home" aria-label="VAM 09, zum Seitenanfang">VAM<span>09</span><span class="mark-dot">.</span></a>
             <div class="footer-links">
-                <a href="https://www.facebook.com/VAM2009/" rel="noreferrer">Facebook</a>
-                <a href="https://www.instagram.com/vam_2009/" rel="noreferrer">Instagram</a>
-                <a href="https://www.youtube.com/@VAM2009" rel="noreferrer">YouTube</a>
                 <a href="admin.html">Buchungsverwaltung</a>
                 <a href="impressum.html">Impressum</a>
                 <a href="datenschutz.html">Datenschutz</a>
+                <a href="datenschutz.html#cookies">Cookie-Hinweise</a>
             </div>
         </div>
+        <p class="shell footer-cookie-note">Die Buchungsverwaltung verwendet ein notwendiges Anmelde-Cookie.</p>
     </footer>
 </body>
 </html>

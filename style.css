@@ -118,7 +118,6 @@ address { font-style: normal; }
     .footer-inner { align-items: flex-start; flex-direction: column; }
 }
 
-.kuh-logo { width: 8.5rem; height: auto; margin-top: .8rem; }
 .project-copy .text-link { display: block; width: fit-content; }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -267,3 +266,67 @@ address { font-style: normal; }
 @media (max-width: 49rem) {
     .booking-layout { grid-template-columns: 1fr; }
 }
+
+.social-bar { background: var(--ink); color: var(--white); }
+.social-links { display: flex; flex-wrap: wrap; justify-content: end; gap: .15rem 1.25rem; }
+.social-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    min-height: 2.4rem;
+    font-size: .9rem;
+    font-weight: 650;
+    text-decoration: none;
+}
+.social-links a:hover { text-decoration: underline; }
+.social-links a:focus-visible { outline-color: var(--salmon); }
+.social-icon { display: inline-grid; place-items: center; flex: 0 0 auto; width: 1rem; height: 1rem; color: var(--salmon); }
+.facebook-icon { font-family: Arial, sans-serif; line-height: 1; font-size: 1.05rem; font-weight: 900; }
+.instagram-icon { position: relative; width: .92rem; height: .92rem; border: .1rem solid currentColor; border-radius: .28rem; }
+.instagram-icon::before { content: ""; width: .37rem; height: .37rem; border: .09rem solid currentColor; border-radius: 50%; }
+.instagram-icon::after { content: ""; position: absolute; top: .08rem; right: .08rem; width: .12rem; height: .12rem; border-radius: 50%; background: currentColor; }
+.youtube-icon { width: 1.05rem; height: .75rem; border-radius: .22rem; background: var(--salmon); }
+.youtube-icon::before { content: ""; border: .22rem solid transparent; border-left: .31rem solid var(--ink); transform: translateX(.1rem); }
+
+.home-header .header-inner { min-height: 5.45rem; gap: .8rem 1.3rem; }
+.header-brands { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .9rem; }
+.kuh-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--ink);
+    padding-inline-start: .85rem;
+    border-inline-start: 1px solid var(--rule);
+    font-weight: 780;
+    text-decoration: none;
+    line-height: 1.13;
+    font-size: .94rem;
+}
+.kuh-brand img { width: clamp(3.15rem, 6vw, 4.65rem); height: auto; }
+.kuh-brand:hover span { text-decoration: underline; }
+.home-header .nav-booking { color: var(--rust); }
+.footer-cookie-note { margin-inline: auto; padding-block: .6rem 1rem; border-top: 1px solid #62524c; font-size: .875rem; }
+
+@media (max-width: 50rem) {
+    .home-header .header-inner { flex-wrap: wrap; padding-block: .75rem; }
+    .home-header .header-inner nav { order: 1; width: 100%; gap: .25rem 1rem; }
+    .social-links { justify-content: start; }
+}
+@media (max-width: 25rem) {
+    .social-links { column-gap: .65rem; }
+}
+
+.checkout-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .45rem .8rem;
+    margin-block: .8rem;
+    padding: .8rem;
+    background: var(--paper);
+    border-radius: .55rem;
+}
+.checkout-summary dt { color: var(--muted); font-size: .88rem; }
+.checkout-summary dd { margin: 0; font-weight: 720; }
+.checkout-summary .booking-price { margin: 0; }
+.checkout-summary .booking-price output { margin: 0; }
+.booking-payment { font-size: .95rem; }

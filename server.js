@@ -159,6 +159,10 @@ function displaySettings(saved) {
     };
 }
 
+function paypalAvailable(settings) {
+    return Boolean(settings.paypalEnabled && settings.paypal);
+}
+
 function rateLimit(req, group, max, windowMs) {
     const now = Date.now();
     if (limited.size >= 10000) {
@@ -232,10 +236,11 @@ app.get('/api/calendar', async (req, res) => {
     const [today, currentHour] = roomDate();
     const last = incrementDay(today, 365);
     if (end <= today || start > last) fail(400, 'Bitte einen Monat innerhalb der nächsten 365 Tage wählen.');
-    const { rows } = await db.query(
-        'SELECT day::text, hour FROM slots WHERE room=$1 AND day >= $2 AND day < $3 AND booking_id IS NULL ORDER BY day, hour',
-        [room, start, end]
-    );
+    const [{ rows }, saved] = await Promise.all([
+        db.query('SELECT day::text, hour FROM slots WHERE room=$1 AND day >= $2 AND day < $3 AND booking_id IS NULL ORDER BY day, hour',
+            [room, start, end]),
+        readSettings()
+    ]);
     const grouped = new Map();
     for (const { day, hour } of rows) {
         if (day < today || day > last) continue;
@@ -247,7 +252,7 @@ app.get('/api/calendar', async (req, res) => {
         const starts = startTimes(openHours, hours, day === today ? Number(currentHour) : -1);
         if (starts.length) days[day] = starts;
     }
-    res.json({ days, cents: 500 + (hours - 1) * 300 });
+    res.json({ days, cents: 500 + (hours - 1) * 300, paypalAvailable: paypalAvailable(displaySettings(saved)) });
 });
 
 async function sendEmail(saved, to, subject, body, key) {
@@ -271,9 +276,10 @@ async function sendEmail(saved, to, subject, body, key) {
 async function confirmByEmail(booking, saved) {
     if (booking.email_sent || booking.cancelled) return booking.email_sent;
     const text = [
+        'Verein Aktiver Musiker 2009 e. V.',
         `Deine KuH-Buchung ${reference(booking.id)} ist bestätigt.`,
-        `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 Uhr · ${booking.hours} Std.`,
-        `Preis: ${euro.format(booking.cents / 100)}`,
+        `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`,
+        `Gesamtpreis: ${euro.format(booking.cents / 100)}`,
         'Bei Rückfragen erreichst du den Verein unter info@vam09.de.'
     ].join('\n');
     try {
@@ -327,7 +333,7 @@ app.post('/api/bookings', async (req, res) => {
     const emailSent = await confirmByEmail(booking, saved);
     res.status(201).json({
         reference: reference(booking.id), room: rooms.get(room), day, hour, hours, cents, emailSent,
-        paypal: settings.paypalEnabled && settings.paypal && !booking.paid
+        paypal: paypalAvailable(settings) && !booking.paid
             ? `https://www.paypal.com/paypalme/${settings.paypal}/${(cents / 100).toFixed(2)}EUR` : null
     });
 });
