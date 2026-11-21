@@ -16,7 +16,7 @@
             <a class="button button-small button-line" href="buchung.html">Zur Raumbuchung</a>
         </div>
     </header>
-    <main class="section shell subpage" id="inhalt">
+    <main class="section shell subpage admin-page" id="inhalt">
         <h1>Buchungen verwalten.</h1>
         <noscript><p>Für die Verwaltung ist JavaScript erforderlich.</p></noscript>
         <form id="admin-login" class="booking-form" hidden>
@@ -36,31 +36,62 @@
             </nav>
             <section id="admin-monat" aria-labelledby="admin-monat-titel">
                 <h2 id="admin-monat-titel">Monatsübersicht</h2>
-                <label class="admin-month-label">Monat <input id="admin-month" type="month" required></label>
                 <dl id="admin-month-totals" class="admin-metrics"></dl>
-                <div id="admin-month-days" class="admin-day-list"></div>
-                <p id="admin-month-status" class="feedback" role="status"></p>
+                <div class="admin-scheduling">
+                    <div class="calendar-panel admin-calendar">
+                        <div class="calendar-toolbar">
+                            <button id="admin-month-prev" class="button button-small button-line" type="button" aria-label="Vorheriger Monat">‹</button>
+                            <label class="admin-month-label"><span class="visually-hidden">Monat auswählen</span><input id="admin-month" type="month" min="2000-01" max="2099-12" required></label>
+                            <button id="admin-month-next" class="button button-small button-line" type="button" aria-label="Nächster Monat">›</button>
+                        </div>
+                        <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+                            <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+                        </div>
+                        <div id="admin-month-days" class="calendar-grid" role="group" aria-label="Kalendertage"></div>
+                        <p class="admin-calendar-legend">
+                            <span><i class="free-mark" aria-hidden="true"></i> Freie Stunden</span>
+                            <span><i class="booked-mark" aria-hidden="true"></i> Buchung</span>
+                        </p>
+                        <p id="admin-month-status" class="feedback" role="status"></p>
+                    </div>
+                    <form id="admin-slots" class="booking-form">
+                        <h2>Zeitfenster verwalten</h2>
+                        <div class="booking-fields admin-slot-fields">
+                            <label>Startdatum <input type="date" name="day" required></label>
+                            <label>Enddatum (optional) <input type="date" name="until"></label>
+                            <label>Raum
+                                <select name="room">
+                                    <option value="proberaum">KuH-Proberaum</option>
+                                    <option value="werkstatt">KuH-DIY-Werkstatt</option>
+                                </select>
+                            </label>
+                            <div class="admin-hour-fields">
+                                <label>Von <select name="hour" required></select></label>
+                                <label>Bis <select name="end" required></select></label>
+                            </div>
+                        </div>
+                        <fieldset id="admin-weekdays" class="admin-weekdays" hidden>
+                            <legend>Wochentage im Zeitraum</legend>
+                            <div>
+                                <label><input type="checkbox" name="weekday" value="1" checked> Mo</label>
+                                <label><input type="checkbox" name="weekday" value="2" checked> Di</label>
+                                <label><input type="checkbox" name="weekday" value="3" checked> Mi</label>
+                                <label><input type="checkbox" name="weekday" value="4" checked> Do</label>
+                                <label><input type="checkbox" name="weekday" value="5" checked> Fr</label>
+                                <label><input type="checkbox" name="weekday" value="6" checked> Sa</label>
+                                <label><input type="checkbox" name="weekday" value="7" checked> So</label>
+                            </div>
+                        </fieldset>
+                        <div class="admin-actions">
+                            <button type="submit" name="action" value="open" class="button button-dark">Zeiten freigeben</button>
+                            <button type="submit" name="action" value="close" class="button button-line">Freie Zeiten sperren</button>
+                        </div>
+                        <p id="admin-slot-status" class="feedback" role="status"></p>
+                        <p id="admin-hours" class="feedback"></p>
+                    </form>
+                </div>
             </section>
-            <form id="admin-slots" class="booking-form">
-                <h2>Öffnungszeiten für einen Tag</h2>
-                <div class="booking-fields">
-                    <label>Datum <input type="date" name="day" required></label>
-                    <label>Raum
-                        <select name="room">
-                            <option value="proberaum">KuH-Proberaum</option>
-                            <option value="werkstatt">KuH-DIY-Werkstatt</option>
-                        </select>
-                    </label>
-                    <label>Ab Stunde <select name="hour" required></select></label>
-                    <label>Bis Stunde <select name="end" required></select></label>
-                </div>
-                <div class="admin-actions">
-                    <button type="submit" name="action" value="open" class="button button-dark">Zeiten freigeben</button>
-                    <button type="submit" name="action" value="close" class="button button-line">Freie Zeiten sperren</button>
-                </div>
-                <p id="admin-hours" class="feedback"></p>
-            </form>
-            <h2>Buchungen am gewählten Tag</h2>
+            <h2 id="admin-bookings-title">Buchungen am gewählten Tag</h2>
             <div id="admin-bookings"></div>
             <section id="admin-einstellungen" aria-labelledby="admin-einstellungen-titel">
                 <h2 id="admin-einstellungen-titel">Zahlung und E-Mail</h2>

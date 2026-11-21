@@ -4,6 +4,10 @@ const schedule = document.querySelector('#admin-slots');
 const message = document.querySelector('#admin-status');
 const bookings = document.querySelector('#admin-bookings');
 const monthInput = document.querySelector('#admin-month');
+const previousMonth = document.querySelector('#admin-month-prev');
+const nextMonth = document.querySelector('#admin-month-next');
+const weekdays = document.querySelector('#admin-weekdays');
+const slotStatus = document.querySelector('#admin-slot-status');
 const settingsForm = document.querySelector('#admin-settings');
 const testEmailForm = document.querySelector('#admin-test-email');
 const monthStatus = document.querySelector('#admin-month-status');
@@ -18,10 +22,11 @@ const rooms = { proberaum: 'KuH-Proberaum', werkstatt: 'KuH-DIY-Werkstatt' };
 const euro = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const hourLabel = hour => `${String(hour).padStart(2, '0')}:00`;
 let loadRequest;
-schedule.elements.day.value = new Intl.DateTimeFormat('en-CA', {
+const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit'
 }).format(new Date());
-monthInput.value = schedule.elements.day.value.slice(0, 7);
+schedule.elements.day.value = today;
+monthInput.value = today.slice(0, 7);
 
 for (let hour = 0; hour <= 24; hour++) {
     if (hour < 24) schedule.elements.hour.add(new Option(hourLabel(hour), hour, hour === 16, hour === 16));
@@ -52,6 +57,8 @@ function showLogin() {
     login.hidden = false;
     panel.hidden = true;
     schedule.reset();
+    weekdays.hidden = true;
+    slotStatus.textContent = '';
     bookings.replaceChildren();
     document.querySelector('#admin-hours').textContent = '';
 }
@@ -123,6 +130,7 @@ async function load() {
         document.querySelector('#admin-hours').textContent = open.length
             ? `Freie Stunden im gewählten Raum: ${open.join(', ')}`
             : 'Im gewählten Raum sind keine freien Stunden hinterlegt.';
+        document.querySelector('#admin-bookings-title').textContent = `Buchungen am ${dateLabel.format(new Date(day))}`;
         bookings.replaceChildren(...(result.bookings.length ? result.bookings.map(displayBooking) : [text('p', 'Für diesen Tag gibt es keine Buchungen.')]));
     } catch (error) {
         if (!request.signal.aborted) showError(error);
@@ -132,13 +140,53 @@ async function load() {
 async function showPanel() {
     login.hidden = true;
     panel.hidden = false;
-    if (!schedule.elements.day.value) {
-        schedule.elements.day.value = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit'
-        }).format(new Date());
-    }
+    if (!schedule.elements.day.value) schedule.elements.day.value = today;
     if (!monthInput.value) monthInput.value = schedule.elements.day.value.slice(0, 7);
+    updateRange();
     await Promise.all([load(), loadMonth(), loadSettings()]);
+}
+
+function updateRange() {
+    const { day, until } = schedule.elements;
+    until.min = day.value;
+    if (until.value && until.value < day.value) until.value = '';
+    weekdays.hidden = !until.value || until.value === day.value;
+}
+
+function markSelectedDay() {
+    for (const button of monthDays.querySelectorAll('button')) {
+        button.setAttribute('aria-pressed', String(button.dataset.day === schedule.elements.day.value));
+    }
+}
+
+function renderMonth(month, entries) {
+    const first = new Date(`${month}-01`);
+    const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+    const offset = (first.getUTCDay() + 6) % 7;
+    const nodes = Array.from({ length: offset }, () => document.createElement('span'));
+    for (let number = 1; number <= last; number++) {
+        const day = `${month}-${String(number).padStart(2, '0')}`;
+        const { free = 0, booked = 0 } = entries.get(day) || {};
+        const button = text('button', number);
+        button.type = 'button';
+        button.className = 'calendar-day';
+        button.dataset.day = day;
+        button.classList.toggle('has-free', Boolean(free));
+        button.classList.toggle('has-booking', Boolean(booked));
+        button.setAttribute('aria-label', `${dateLabel.format(new Date(day))} · ${free} Std. frei · ${booked} ${booked === 1 ? 'Buchung' : 'Buchungen'}`);
+        if (day === today) button.setAttribute('aria-current', 'date');
+        button.addEventListener('click', () => {
+            schedule.elements.day.value = day;
+            schedule.elements.until.value = '';
+            updateRange();
+            markSelectedDay();
+            slotStatus.textContent = '';
+            load();
+        });
+        nodes.push(button);
+    }
+    monthDays.replaceChildren(...nodes);
+    markSelectedDay();
 }
 
 async function loadMonth() {
@@ -146,9 +194,17 @@ async function loadMonth() {
     monthRequest?.abort();
     const request = new AbortController();
     monthRequest = request;
+    const month = monthInput.value;
+    previousMonth.disabled = month <= monthInput.min;
+    nextMonth.disabled = month >= monthInput.max;
+    if (monthDays.dataset.month !== month) {
+        monthDays.dataset.month = month;
+        monthTotals.replaceChildren();
+        renderMonth(month, new Map());
+    }
     monthStatus.textContent = 'Monat wird geladen …';
     try {
-        const result = await api(`/api/admin/month?${new URLSearchParams({ month: monthInput.value })}`, undefined, request.signal);
+        const result = await api(`/api/admin/month?${new URLSearchParams({ month })}`, undefined, request.signal);
         if (request.signal.aborted) return;
         const all = new Map(result.times.map(item => [item.day, {free: item.free, booked: 0, unpaid: 0, cancelled: 0}]));
         for (const item of result.bookings) {
@@ -162,23 +218,22 @@ async function loadMonth() {
             card.append(text('dt', label), text('dd', totals[key]));
             return card;
         }));
-        monthDays.replaceChildren(...Array.from(all.entries()).sort(([left], [right]) => left.localeCompare(right)).map(([day, item]) => {
-            const button = text('button', `${dateLabel.format(new Date(day))} · ${item.free} Std. frei · ${item.booked} ${item.booked === 1 ? 'Buchung' : 'Buchungen'}`);
-            button.type = 'button';
-            button.addEventListener('click', () => {
-                schedule.elements.day.value = day;
-                schedule.scrollIntoView();
-                schedule.elements.day.focus({ preventScroll: true });
-                load();
-            });
-            return button;
-        }));
+        renderMonth(month, all);
         monthStatus.textContent = all.size ? '' : 'Für diesen Monat gibt es noch keine Zeiten oder Buchungen.';
     } catch (error) {
         if (request.signal.aborted) return;
         monthStatus.textContent = '';
         showError(error);
     }
+}
+
+function moveMonth(direction) {
+    const target = new Date(`${monthInput.value || today.slice(0, 7)}-01`);
+    target.setUTCMonth(target.getUTCMonth() + direction);
+    const month = target.toISOString().slice(0, 7);
+    if (month < monthInput.min || month > monthInput.max) return;
+    monthInput.value = month;
+    loadMonth();
 }
 
 function displaySettings(result) {
@@ -243,6 +298,8 @@ testEmailForm.addEventListener('submit', async event => {
 });
 
 monthInput.addEventListener('change', loadMonth);
+previousMonth.addEventListener('click', () => moveMonth(-1));
+nextMonth.addEventListener('click', () => moveMonth(1));
 login.addEventListener('submit', async event => {
     event.preventDefault();
     try {
@@ -266,6 +323,9 @@ document.querySelector('#admin-logout').addEventListener('click', async () => {
 });
 schedule.elements.day.addEventListener('change', () => {
     if (!schedule.elements.day.validity.valid) return;
+    updateRange();
+    markSelectedDay();
+    slotStatus.textContent = '';
     const selectedMonth = schedule.elements.day.value.slice(0, 7);
     if (monthInput.value !== selectedMonth) {
         monthInput.value = selectedMonth;
@@ -273,19 +333,35 @@ schedule.elements.day.addEventListener('change', () => {
     }
     load();
 });
+schedule.elements.until.addEventListener('change', updateRange);
 schedule.elements.room.addEventListener('change', load);
 schedule.addEventListener('submit', async event => {
     event.preventDefault();
+    const { room, day, until, hour, end } = schedule.elements;
+    const open = event.submitter.value === 'open';
+    const range = !weekdays.hidden;
+    if (!open && range && !window.confirm('Freie Stunden im gewählten Zeitraum sperren? Bereits gebuchte Stunden bleiben reserviert.')) return;
+    const payload = { room: room.value, day: day.value, hour: Number(hour.value), end: Number(end.value), open };
+    if (range) {
+        payload.until = until.value;
+        payload.weekdays = Array.from(weekdays.querySelectorAll('input:checked'), field => Number(field.value));
+    }
+    const buttons = schedule.querySelectorAll('button[type="submit"]');
+    buttons.forEach(button => { button.disabled = true; });
+    slotStatus.textContent = 'Zeiten werden gespeichert …';
     try {
-        const open = event.submitter.value === 'open';
-        await api('/api/admin/slots', {
-            day: schedule.elements.day.value, room: schedule.elements.room.value,
-            hour: Number(schedule.elements.hour.value), end: Number(schedule.elements.end.value), open
-        });
-        message.textContent = open ? 'Zeiten freigegeben.' : 'Freie Stunden im gewählten Zeitraum gesperrt.';
+        const { changedHours, changedDays } = await api('/api/admin/slots', payload);
+        const hoursLabel = changedHours === 1 ? 'Stunde' : 'Stunden';
+        const daysLabel = changedDays === 1 ? 'Tag' : 'Tagen';
+        slotStatus.textContent = changedHours
+            ? `${changedHours} ${hoursLabel} an ${changedDays} ${daysLabel} ${open ? 'freigegeben' : 'gesperrt'}.`
+            : 'Keine Zeiten geändert.';
         await Promise.all([load(), loadMonth()]);
     } catch (error) {
-        showError(error);
+        if (error.status === 401) showError(error);
+        else slotStatus.textContent = error.status ? error.message : 'Die Zeiten konnten nicht gespeichert werden.';
+    } finally {
+        buttons.forEach(button => { button.disabled = false; });
     }
 });
 

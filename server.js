@@ -426,18 +426,39 @@ app.get('/api/admin/schedule', async (req, res) => {
 });
 app.post('/api/admin/slots', async (req, res) => {
     const { room, day, hour } = slotInput(req.body || {});
-    const end = req.body.end;
+    const { end, open, weekdays = [1, 2, 3, 4, 5, 6, 7] } = req.body;
     if (!Number.isInteger(end) || end <= hour || end > 24) fail(400, 'Bitte eine gültige Endzeit wählen.');
-    if (req.body.open === true) {
-        ensureFuture(day, hour);
-        await db.query(`INSERT INTO slots (room, day, hour)
-                        SELECT $1, $2::date, n FROM generate_series($3::integer, $4::integer) AS n
-                        ON CONFLICT DO NOTHING`, [room, day, hour, end - 1]);
-    } else if (req.body.open === false) {
-        await db.query('DELETE FROM slots WHERE room=$1 AND day=$2 AND hour >= $3 AND hour < $4 AND booking_id IS NULL',
-            [room, day, hour, end]);
-    } else fail(400, 'Bitte Zeiten freigeben oder sperren.');
-    res.json({ ok: true });
+    if (typeof open !== 'boolean') fail(400, 'Bitte Zeiten freigeben oder sperren.');
+    const until = req.body.until === undefined ? day : dateValue(req.body.until);
+    if (until < day || until > incrementDay(day, 365)) fail(400, 'Bitte einen Zeitraum von höchstens 366 Kalendertagen wählen.');
+    if (!Array.isArray(weekdays) || !weekdays.length || weekdays.length > 7 ||
+        !weekdays.every(value => Number.isInteger(value) && value >= 1 && value <= 7)) {
+        fail(400, 'Bitte mindestens einen gültigen Wochentag auswählen.');
+    }
+    const days = [];
+    for (let current = day; current <= until; current = incrementDay(current, 1)) {
+        const weekday = new Date(current).getUTCDay() || 7;
+        if (weekdays.includes(weekday)) days.push(current);
+    }
+    if (!days.length) fail(400, 'Im gewählten Zeitraum liegt kein ausgewählter Wochentag.');
+    if (open) {
+        ensureFuture(days[0], hour);
+        ensureFuture(days.at(-1), hour);
+    }
+    const mutation = open ? `
+        INSERT INTO slots (room, day, hour)
+        SELECT $1, dates.day, hours.hour
+        FROM unnest($2::date[]) AS dates(day)
+        CROSS JOIN generate_series($3::integer, $4::integer) AS hours(hour)
+        ON CONFLICT DO NOTHING
+    ` : `
+        DELETE FROM slots WHERE room=$1 AND day=ANY($2::date[]) AND hour BETWEEN $3 AND $4 AND booking_id IS NULL
+    `;
+    const { rows: [changed] } = await db.query(`
+        WITH changed AS (${mutation} RETURNING day)
+        SELECT COUNT(*)::int AS "changedHours", COUNT(DISTINCT day)::int AS "changedDays" FROM changed
+    `, [room, days, hour, end - 1]);
+    res.json({ ok: true, ...changed });
 });
 app.post('/api/admin/bookings/:id', async (req, res) => {
     const { id } = req.params;

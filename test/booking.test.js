@@ -145,6 +145,30 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal((await api('/api/admin/slots', 'POST', { ...slot, open: false }, true)).status, 200);
     assert.deepEqual((await api(`/api/availability?${urlQuery}`)).body.starts, []);
 
+    const after = offset => new Date(Date.parse(tomorrow) + offset * 86400000).toISOString().slice(0, 10);
+    const weekday = day => new Date(day).getUTCDay() || 7;
+    const range = { room: 'werkstatt', day: tomorrow, until: after(2), hour: 12, end: 14,
+        weekdays: [weekday(tomorrow), weekday(after(2))], open: true };
+    assert.equal((await api('/api/admin/slots', 'POST', range)).status, 401);
+    assert.equal((await api('/api/admin/slots', 'POST', { ...range, until: after(-1) }, true)).status, 400);
+    assert.equal((await api('/api/admin/slots', 'POST', { ...range, weekdays: [] }, true)).status, 400);
+    assert.deepEqual((await api('/api/admin/slots', 'POST', range, true)).body, { ok: true, changedHours: 4, changedDays: 2 });
+    assert.deepEqual((await api('/api/admin/slots', 'POST', range, true)).body, { ok: true, changedHours: 0, changedDays: 0 });
+    const workshopHours = async day => (await api(`/api/availability?room=werkstatt&day=${day}&hours=1`)).body.starts;
+    assert.deepEqual(await workshopHours(tomorrow), [12, 13]);
+    assert.deepEqual(await workshopHours(after(1)), []);
+    assert.deepEqual(await workshopHours(after(2)), [12, 13]);
+    const workshop = { ...base, id: randomUUID(), room: 'werkstatt', day: after(2), hour: 12, hours: 1 };
+    assert.equal((await api('/api/bookings', 'POST', workshop)).status, 201);
+    assert.deepEqual((await api('/api/admin/slots', 'POST', { ...range, open: false }, true)).body,
+        { ok: true, changedHours: 3, changedDays: 2 });
+    assert.deepEqual(await workshopHours(tomorrow), []);
+    assert.deepEqual(await workshopHours(after(2)), []);
+    const workshopSchedule = await api(`/api/admin/schedule?day=${after(2)}`, 'GET', undefined, true);
+    assert.equal(workshopSchedule.body.bookings.find(booking => booking.id === workshop.id).cancelled, false);
+    assert.equal((await api(`/api/admin/bookings/${workshop.id}`, 'POST', { action: 'cancel' }, true)).status, 200);
+    assert.deepEqual(await workshopHours(after(2)), [12]);
+
     assert.equal((await api('/api/admin/logout', 'POST', {}, true)).status, 200);
     const exit = once(process, 'exit');
     process.kill();
