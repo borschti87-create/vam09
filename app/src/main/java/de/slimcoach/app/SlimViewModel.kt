@@ -53,8 +53,23 @@ class SlimViewModel(application: Application) : AndroidViewModel(application) {
     fun saveProfile(p: Profile, after: () -> Unit) = write(after) {
         val previous = (profile.value as? ProfileState.Ready)?.profile
         if (previous == null || (weights.value.firstOrNull()?.kg ?: previous.current) != p.current) diary.save(Weight(deviceDay.value, p.current))
-        store.save(p)
+        val initial = if (previous == null) CalorieTargetEngine.estimate(p, p.current)?.recommended
+            else previous.confirmedTarget
+        val targetDay = if ((previous == null && initial != null) || p.manualTarget != previous?.manualTarget)
+            deviceDay.value else previous?.targetUpdatedDay
+        store.save(p.copy(confirmedTarget = initial, targetUpdatedDay = targetDay))
     }
+
+    fun confirmTarget(target: Int) = write {
+        val currentProfile = (profile.value as? ProfileState.Ready)?.profile ?: return@write
+        val kg = weights.value.firstOrNull()?.kg ?: currentProfile.current
+        val estimate = CalorieTargetEngine.estimate(currentProfile, kg) ?: return@write
+        if (target == estimate.recommended) {
+            store.save(currentProfile.copy(manualTarget = null, confirmedTarget = target,
+                targetUpdatedDay = deviceDay.value))
+        }
+    }
+
     fun saveWeight(weight: Weight, after: () -> Unit) = write(after) { diary.save(weight) }
     fun delete(weight: Weight) = write { diary.delete(weight) }
     fun saveWater(entry: Water, after: () -> Unit = {}) = write(after) { diary.save(entry) }

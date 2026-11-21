@@ -7,7 +7,8 @@ data class Profile(
     val name: String, val birthYear: Int, val height: Double, val start: Double,
     val current: Double, val goal: Double, val formula: Int, val activity: Int,
     val pace: Int, val preference: String, val routine: String, val readyMeals: Boolean,
-    val stepGoal: Int, val waterGoal: Int, val restricted: Boolean, val manualTarget: Int?
+    val stepGoal: Int, val waterGoal: Int, val restricted: Boolean, val manualTarget: Int?,
+    val confirmedTarget: Int? = null, val targetUpdatedDay: Long? = null
 )
 
 data class CalorieEstimate(val basal: Int, val total: Int, val recommended: Int) {
@@ -23,7 +24,10 @@ object CalorieTargetEngine {
         val age = today.year - profile.birthYear
         if (profile.restricted || age !in 19..120 || profile.formula !in 0..1) return null
         if (profile.height !in 100.0..250.0 || weight !in 30.0..500.0 ||
-            profile.goal / (profile.height / 100).let { it * it } < 18.5) return null
+            profile.goal !in 30.0..500.0 || profile.activity !in factors.indices ||
+            profile.pace !in deficits.indices) return null
+        val heightSquared = (profile.height / 100).let { it * it }
+        if (minOf(weight, profile.goal) / heightSquared < 18.5) return null
         val basal = (10 * weight + 6.25 * profile.height - 5 * age +
             if (profile.formula == 0) -161 else 5).roundToInt()
         val total = (basal * factors[profile.activity]).roundToInt()

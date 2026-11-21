@@ -109,7 +109,8 @@ private fun SlimCoach(model: SlimViewModel) {
     val route = entry?.destination?.route
     val current = weights.firstOrNull()?.kg
     val estimate = CalorieTargetEngine.estimate(profile, current ?: profile.current)
-    val target = estimate?.let { e -> profile.manualTarget?.takeIf { CalorieTargetEngine.acceptsManual(it, e) } ?: e.recommended }
+    val savedTarget = profile.manualTarget ?: profile.confirmedTarget
+    val target = estimate?.let { e -> savedTarget?.takeIf { CalorieTargetEngine.acceptsManual(it, e) } }
     val todayMeals = meals.filter { it.day == today }
     val total = todayMeals.totals()
     val days = meals.map { it.day }
@@ -226,13 +227,13 @@ private fun SlimCoach(model: SlimViewModel) {
                             if (group.isEmpty()) Text("Keine Einträge")
                             group.forEach { meal ->
                                 key(meal.id) {
-                                Text(meal.name, style = MaterialTheme.typography.titleMedium)
-                                Text("${meal.amount.display()} ${meal.unit} · ${meal.kcal.display()} kcal")
-                                EntryActions(
-                                    edit = { nav.navigate("meal/${meal.day}?id=${meal.id}") },
-                                    delete = { model.delete(meal) },
-                                    copy = { model.copy(meal, today) }
-                                )
+                                    Text(meal.name, style = MaterialTheme.typography.titleMedium)
+                                    Text("${meal.amount.display()} ${meal.unit} · ${meal.kcal.display()} kcal")
+                                    EntryActions(
+                                        edit = { nav.navigate("meal/${meal.day}?id=${meal.id}") },
+                                        delete = { model.delete(meal) },
+                                        copy = { model.copy(meal, today) }
+                                    )
                                 }
                             }
                         }
@@ -254,8 +255,18 @@ private fun SlimCoach(model: SlimViewModel) {
                             Text("Grundumsatz ${estimate.basal} kcal")
                             Text("Gesamtenergiebedarf ${estimate.total} kcal")
                             Text("Empfohlenes Ziel ${estimate.recommended} kcal")
-                            Text("Geplantes Defizit ${estimate.total - (target ?: estimate.recommended)} kcal")
+                            if (target != null) {
+                                Text("Aktives Ziel $target kcal · geplantes Defizit ${estimate.total - target} kcal")
+                                profile.targetUpdatedDay?.let {
+                                    Text("Aktualisiert am ${LocalDate.ofEpochDay(it).germanDate()}")
+                                }
+                            } else Text("Bestätige ein Tagesziel, um dein Budget anzuzeigen.")
                             Text("Schätzung anhand von Profil, Aktivitätsniveau und zuletzt erfasstem Gewicht.")
+                            if (target != estimate.recommended) {
+                                Button(onClick = { model.confirmTarget(estimate.recommended) }) {
+                                    Text("Empfohlenes Ziel übernehmen")
+                                }
+                            }
                         }
                     }
                     Panel("Deine Gewohnheiten") {
@@ -319,11 +330,15 @@ private fun SlimCoach(model: SlimViewModel) {
                     Field(fields, "Lokale Produktsuche")
                     OpenFoodFactsAttribution()
                     val search = fields["Lokale Produktsuche"].orEmpty().trim()
+                    val usage = meals.filter { it.barcode != null }.groupBy { it.barcode }
                     val visible = products.filter { "${it.name} ${it.brand} ${it.code}".contains(search, ignoreCase = true) }
+                        .sortedWith(compareByDescending<FoodProductEntity> { it.favorite }
+                            .thenByDescending { usage[it.code]?.size ?: 0 })
                     if (visible.isEmpty()) Text("Keine passenden gespeicherten Produkte.")
                     visible.forEach { product ->
                         Panel(product.name.ifBlank { product.code }) {
                             Text(listOf(product.brand, product.code).filter { it.isNotBlank() }.joinToString(" · "))
+                            usage[product.code]?.let { Text("${it.size} Tagebucheinträge") }
                             Row {
                                 TextButton(onClick = { nav.navigate("meal/$selectedDay?code=${product.code}") }) { Text("Verwenden") }
                                 TextButton(onClick = { model.favorite(product) }) {

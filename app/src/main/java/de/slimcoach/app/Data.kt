@@ -81,7 +81,9 @@ class ProfileStore(private val context: Context) {
                 json.getInt("formula"), json.getInt("activity"), json.getInt("pace"),
                 json.getString("preference"), json.getString("routine"), json.getBoolean("ready"),
                 json.getInt("steps"), json.getInt("water"), json.getBoolean("restricted"),
-                if (json.isNull("target")) null else json.getInt("target"))
+                if (json.isNull("target")) null else json.getInt("target"),
+                if (json.isNull("confirmedTarget")) null else json.getInt("confirmedTarget"),
+                if (json.isNull("targetUpdatedDay")) null else json.getLong("targetUpdatedDay"))
         }
     }
 
