@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>KuH-Buchungsverwaltung · VAM 09</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="admin.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#inhalt">Zum Inhalt</a>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="wordmark" href="index.html" aria-label="VAM 09, Startseite">VAM<span>09</span><span class="mark-dot">.</span></a>
+            <a class="button button-small button-line" href="buchung.html">Zur Raumbuchung</a>
+        </div>
+    </header>
+    <main class="section shell subpage" id="inhalt">
+        <h1>Buchungen verwalten.</h1>
+        <noscript><p>Für die Verwaltung ist JavaScript erforderlich.</p></noscript>
+        <form id="admin-login" class="booking-form" hidden>
+            <div class="booking-fields">
+                <label>Vereinspasswort <input type="password" name="password" autocomplete="current-password" required></label>
+            </div>
+            <div class="admin-actions"><button type="submit" class="button button-dark">Anmelden</button></div>
+        </form>
+        <p id="admin-status" class="feedback" role="status"></p>
+        <div id="admin-panel" hidden>
+            <button id="admin-logout" class="button button-line" type="button">Abmelden</button>
+            <form id="admin-slots" class="booking-form">
+                <h2>Öffnungszeiten für einen Tag</h2>
+                <div class="booking-fields">
+                    <label>Datum <input type="date" name="day" required></label>
+                    <label>Raum
+                        <select name="room">
+                            <option value="proberaum">KuH-Proberaum</option>
+                            <option value="werkstatt">KuH-DIY-Werkstatt</option>
+                        </select>
+                    </label>
+                    <label>Ab Stunde <select name="hour" required></select></label>
+                    <label>Bis Stunde <select name="end" required></select></label>
+                </div>
+                <div class="admin-actions">
+                    <button type="submit" name="action" value="open" class="button button-dark">Zeiten freigeben</button>
+                    <button type="submit" name="action" value="close" class="button button-line">Freie Zeiten sperren</button>
+                </div>
+                <p id="admin-hours" class="feedback"></p>
+            </form>
+            <h2>Buchungen am gewählten Tag</h2>
+            <div id="admin-bookings"></div>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <a href="index.html">Verein Aktiver Musiker 2009 e. V.</a>
+            <div class="footer-links"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></div>
+        </div>
+    </footer>
+</body>
+</html>

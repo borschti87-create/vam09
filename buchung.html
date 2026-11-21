@@ -20,44 +20,38 @@
     <main class="section shell subpage" id="inhalt">
         <p class="eyebrow">Kultur- und Innovationshof</p>
         <h1>Raum buchen.</h1>
-        <p>Wähle einen Raum und prüfe freie Zeiten im jeweiligen KuH-Buchungskalender. Die erste Stunde kostet 5 €, jede weitere 3 €.</p>
-        <div class="booking-options">
-            <article id="proberaum-kalender">
-                <h2>Proberaum</h2>
-                <p>Für Bandproben, Einzelproben und gemeinsame Sessions.</p>
-                <a class="button button-dark" href="https://www.vam09.de/kultur-und-innovationshof/proberaum-buchen/" rel="noreferrer">Proberaum-Kalender öffnen</a>
-            </article>
-            <article id="werkstatt-kalender">
-                <h2>DIY-Werkstatt</h2>
-                <p>Für Reparaturen, eigene Werkstücke und Upcycling.</p>
-                <a class="button button-dark" href="https://www.vam09.de/kultur-und-innovationshof/werkstatt/" rel="noreferrer">Werkstatt-Kalender öffnen</a>
-            </article>
-        </div>
-        <section aria-labelledby="anfrage-titel" id="anfrage">
-            <h2 id="anfrage-titel">Termin per E-Mail anfragen</h2>
-            <p id="anfrage-hinweis">Eine Anfrage reserviert noch keinen Raum. Warte auf die Bestätigung des Vereins.</p>
-            <form id="buchungsformular" class="booking-form" aria-describedby="anfrage-hinweis" hidden>
-                <div class="booking-fields">
-                    <label for="buchung-raum">Raum
-                        <select id="buchung-raum" name="raum" required>
-                            <option value="proberaum">KuH-Proberaum</option>
-                            <option value="werkstatt">KuH-DIY-Werkstatt</option>
-                        </select>
-                    </label>
-                    <label for="buchung-datum">Datum
-                        <input type="date" id="buchung-datum" name="datum" required>
-                    </label>
-                    <label for="buchung-uhrzeit">Beginn (Ortszeit)
-                        <input type="time" id="buchung-uhrzeit" name="uhrzeit" required>
-                    </label>
-                    <label for="buchung-stunden">Dauer in Stunden
-                        <input type="number" id="buchung-stunden" name="stunden" min="1" step="1" value="1" required>
-                    </label>
-                </div>
-                <p class="booking-price">Voraussichtlicher Preis <output id="buchung-preis" for="buchung-stunden" aria-live="polite">5,00 €</output></p>
-                <button type="submit" class="button button-dark">E-Mail-Entwurf öffnen</button>
-            </form>
-            <p class="booking-contact">Du kannst uns auch direkt an <a class="text-link" href="mailto:info@vam09.de?subject=KuH-Terminanfrage">info@vam09.de</a> schreiben.</p>
+        <p>Die erste Stunde kostet 5 €, jede weitere 3 €. Wähle Raum, Datum und Dauer, um die freien Startzeiten zu sehen.</p>
+        <noscript><p class="note">Für Live-Verfügbarkeit und Buchungen ist JavaScript erforderlich.</p></noscript>
+        <form id="buchungsformular" class="booking-form" autocomplete="on">
+            <div class="booking-fields">
+                <label>Raum
+                    <select name="raum" required>
+                        <option value="proberaum">KuH-Proberaum</option>
+                        <option value="werkstatt">KuH-DIY-Werkstatt</option>
+                    </select>
+                </label>
+                <label>Datum <input type="date" name="datum" required></label>
+                <label>Dauer in Stunden <input type="number" name="stunden" min="1" max="8" step="1" value="1" required></label>
+                <label>Freie Startzeit
+                    <select name="uhrzeit" required disabled><option value="">Bitte Datum wählen</option></select>
+                </label>
+            </div>
+            <p id="kalender-status" class="feedback" role="status"></p>
+            <div class="booking-fields booking-person">
+                <label>Name <input name="name" autocomplete="name" maxlength="100" required></label>
+                <label>E-Mail <input name="email" type="email" autocomplete="email" maxlength="254" required></label>
+            </div>
+            <p class="booking-price">Gesamtpreis <output id="buchung-preis">5,00 €</output></p>
+            <p>Mit deiner Buchung wird der Raum verbindlich reserviert. Hinweise zur Verarbeitung deiner Daten findest du unter <a href="datenschutz.html">Datenschutz</a>.</p>
+            <button name="buchen" type="submit" class="button button-dark" disabled>Zahlungspflichtig buchen</button>
+            <p id="buchung-status" class="feedback" role="alert"></p>
+        </form>
+        <section id="bestaetigung" class="note booking-confirmation" aria-labelledby="bestaetigung-titel" hidden>
+            <h2 id="bestaetigung-titel" tabindex="-1">Dein Raum ist gebucht.</h2>
+            <p id="bestaetigung-daten"></p>
+            <p id="bestaetigung-mail"></p>
+            <p id="bestaetigung-paypal-hinweis" hidden>Wenn du per PayPal zahlst, gib bitte die Buchungsnummer im Zahlungsbetreff an. Der Verein gleicht die Zahlung ab.</p>
+            <a id="bestaetigung-paypal" class="button button-dark" href="#" rel="noreferrer" hidden>Mit PayPal bezahlen</a>
         </section>
     </main>
     <footer class="site-footer">
