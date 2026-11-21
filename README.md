@@ -19,9 +19,9 @@ npm test
 
 ## Hosting für den Verein
 
-Der Render-Blueprint legt einen kostenlosen Web Service in Frankfurt an. Für Buchungen, die Neustarts und Deployments überstehen sollen, braucht er eine externe PostgreSQL-Datenbank. Ein kostenloser Neon-Tarif in einer EU-Region ist eine Möglichkeit. Die kostenlose Render-eigene PostgreSQL-Datenbank läuft nach 30 Tagen aus.
+Der Render-Blueprint legt einen kostenlosen Webdienst und eine kostenlose, nur intern erreichbare PostgreSQL-Datenbank in Frankfurt an. Die Datenbank übersteht Neustarts und Deployments, läuft aber 30 Tage nach der Erstellung ab. Vor Ablauf die Buchungsdaten sichern und bei Bedarf zu einer dauerhaft verfügbaren PostgreSQL-Datenbank umziehen.
 
-Im Render-Dashboard den Blueprint aus dem GitHub-Repository und dem gewünschten Branch auswählen. Die PostgreSQL-Verbindungs-URL mit TLS als `DATABASE_URL` und ein eigenes Vereinspasswort als `ADMIN_PASSWORD` in Render hinterlegen. Render erzeugt `SESSION_KEY` für die Admin-Sitzungen. Die Produktionsinstanz verwendet niemals lokalen Dateispeicher für Buchungen. Die Website verwendet die von Render gesetzte öffentliche URL. Nach Leerlauf kann der erste Seitenaufruf länger dauern.
+Im Render-Dashboard den Blueprint aus dem GitHub-Repository und dem gewünschten Branch auswählen. Render hinterlegt die Datenbankverbindung als `DATABASE_URL` und erzeugt `ADMIN_PASSWORD` und `SESSION_KEY`. Das Passwort für die Buchungsverwaltung steht auf der Environment-Seite des Webdienstes und kann dort durch ein eigenes Passwort mit mindestens 24 Zeichen ersetzt werden. Die Website verwendet die von Render gesetzte öffentliche URL. Nach Leerlauf kann der erste Seitenaufruf länger dauern.
 
 | Optionale Variable | Wirkung |
 | --- | --- |
