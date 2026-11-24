@@ -22,7 +22,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
                 !data.text.includes('&anfrage=') || data.text.includes('booking@example.invalid'))) return new Response(null, { status: 400 });
             const valid = options.headers.Authorization === 'Bearer ${mailKey}' &&
                 options.headers['Idempotency-Key'].startsWith('kuh-') && data.from === '${mailFrom}' &&
-                data.to[0].endsWith('@example.invalid');
+                data.to[0].endsWith('@example.invalid') && data.reply_to === 'kuh_stassfurt@mail.de';
             return new Response(null, { status: valid ? 202 : 400 });
         };
     `;
@@ -94,7 +94,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal(setup.status, 200);
     assert.deepEqual(setup.body, {
         paypal: 'TestVerein', paypalEnabled: true, emailFrom: mailFrom, emailEnabled: true, emailKeySet: true,
-        approvalRequired: false, approvalEmail: ''
+        approvalRequired: false, approvalEmail: 'kuh_stassfurt@mail.de'
     });
     assert.deepEqual((await api('/api/admin/settings', 'GET', undefined, true)).body, setup.body);
     assert.equal((await api('/api/admin/test-email', 'POST', { email: 'board@example.invalid' }, true)).status, 200);
@@ -172,7 +172,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal((await api(`/api/admin/bookings/${workshop.id}`, 'POST', { action: 'cancel' }, true)).status, 200);
     assert.deepEqual(await workshopHours(after(2)), [12]);
 
-    assert.equal((await api('/api/admin/settings', 'POST', { ...savedSettings, approvalRequired: true }, true)).status, 400);
+    assert.equal((await api('/api/admin/settings', 'POST', { ...savedSettings, approvalRequired: true, approvalEmail: '' }, true)).status, 400);
     const approval = await api('/api/admin/settings', 'POST', { ...savedSettings, approvalRequired: true, approvalEmail: 'board@example.invalid' }, true);
     assert.equal(approval.status, 200);
     assert.equal(approval.body.approvalRequired, true);

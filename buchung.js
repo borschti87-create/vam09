@@ -209,12 +209,12 @@ form.addEventListener('submit', async event => {
                 `Termin: ${formattedDate}, ${timeRange} (Ortszeit)`,
                 `Gesamtpreis: ${total}`,
                 `Zahlung: ${result.paypal || 'Bitte Zahlungsdetails beim Verein erfragen.'}`,
-                'Kontakt: info@vam09.de · +49 157 86890347'
+                'Kontakt: kuh_stassfurt@mail.de · +49 157 86890347'
             ].join('\n')
         };
         document.querySelector('#bestaetigung-mail').textContent = result.emailSent
             ? 'Eine Bestätigung wurde per E-Mail verschickt.'
-            : 'Speichere deine Buchungsnummer für Rückfragen an info@vam09.de.';
+            : 'Speichere deine Buchungsnummer für Rückfragen an kuh_stassfurt@mail.de.';
         if (result.paypal) {
             const payment = document.querySelector('#bestaetigung-paypal');
             payment.href = result.paypal;

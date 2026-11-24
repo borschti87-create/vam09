@@ -80,6 +80,7 @@ const clock = new Intl.DateTimeFormat('sv-SE', {
 });
 const roomDate = () => clock.format(new Date()).replace(' kl. ', ' ').split(' ');
 const euro = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
+const kuhEmail = 'kuh_stassfurt@mail.de';
 const reference = id => id.slice(0, 8).toUpperCase();
 const limited = new Map();
 
@@ -161,7 +162,7 @@ function displaySettings(saved) {
     return {
         paypal, paypalEnabled: saved.paypalEnabled ?? Boolean(paypal),
         emailFrom, emailKeySet, emailEnabled: saved.emailEnabled ?? Boolean(emailFrom && emailKeySet),
-        approvalRequired: saved.approvalRequired === true, approvalEmail: saved.approvalEmail ?? ''
+        approvalRequired: saved.approvalRequired === true, approvalEmail: saved.approvalEmail ?? kuhEmail
     };
 }
 
@@ -280,7 +281,7 @@ async function sendEmail(saved, to, subject, body, key) {
             'Content-Type': 'application/json',
             'Idempotency-Key': key
         },
-        body: JSON.stringify({ from: saved.emailFrom ?? process.env.BOOKING_FROM, to: [to], reply_to: 'info@vam09.de', subject, text: body }),
+        body: JSON.stringify({ from: saved.emailFrom ?? process.env.BOOKING_FROM, to: [to], reply_to: kuhEmail, subject, text: body }),
         signal: AbortSignal.timeout(6500)
     });
     if (!response.ok) throw new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`);
@@ -296,7 +297,7 @@ async function confirmByEmail(booking, saved) {
         `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`,
         `Gesamtpreis: ${euro.format(booking.cents / 100)}`,
         ...(payment ? [`PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${reference(booking.id)} im Zahlungsbetreff an.`] : []),
-        'Bei Rückfragen erreichst du den Verein unter info@vam09.de.'
+        `Bei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`
     ].join('\n');
     try {
         const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${reference(booking.id)}`, text, `kuh-booking/${booking.id}`);
@@ -319,7 +320,7 @@ async function notifyApproval(booking, saved) {
     const subject = pending ? `Neue KuH-Buchungsanfrage ${ref}` : `Deine KuH-Anfrage ${ref} wurde abgelehnt`;
     const period = `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`;
     try {
-        let body = `${subject}.\n${period}\nBei Rückfragen erreichst du den Verein unter info@vam09.de.`;
+        let body = `${subject}.\n${period}\nBei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`;
         if (pending) {
             const link = new URL('/admin.html', site || `http://localhost:${port}`);
             link.searchParams.set('tag', booking.day);
