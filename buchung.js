@@ -36,6 +36,7 @@ let calendarRequest;
 let pendingBooking;
 let submitting = false;
 let confirmation;
+let approvalRequired = false;
 
 const requestedRoom = new URLSearchParams(location.search).get('raum');
 if (['proberaum', 'werkstatt'].includes(requestedRoom)) room.value = requestedRoom;
@@ -126,7 +127,13 @@ async function loadCalendar() {
         availability = result.days;
         if (!availability[selectedDay]) selectedDay = '';
         price.value = currency.format(result.cents / 100);
-        paymentDescription.textContent = result.paypalAvailable ? 'Zahlung per PayPal nach der Buchung möglich. ' : '';
+        approvalRequired = result.approvalRequired;
+        submit.textContent = approvalRequired ? 'Buchung anfragen' : 'Zahlungspflichtig buchen';
+        document.querySelector('#buchung-hinweis').textContent = approvalRequired
+            ? 'Der Verein prüft deine Anfrage. Erst mit seiner Zusage per E-Mail ist die Buchung verbindlich.'
+            : 'Du kannst die Angaben vor dem Absenden ändern. Die Buchung reserviert den Raum verbindlich.';
+        paymentDescription.textContent = result.paypalAvailable
+            ? (approvalRequired ? 'Zahlung per PayPal nach der Zusage möglich. ' : 'Zahlung per PayPal nach der Buchung möglich. ') : '';
         calendarStatus.textContent = Object.keys(availability).length ? '' : 'In diesem Monat sind für diese Dauer keine Termine frei.';
         renderCalendar();
     } catch (error) {
@@ -162,7 +169,7 @@ form.addEventListener('submit', async event => {
     event.preventDefault();
     if (submitting || selectedHour === undefined || submit.disabled) return;
     const payload = {
-        room: room.value, day: selectedDay, hour: selectedHour, hours: hours.valueAsNumber,
+        room: room.value, day: selectedDay, hour: selectedHour, hours: hours.valueAsNumber, approvalRequired,
         name: form.elements.name.value.trim(), email: form.elements.email.value.trim()
     };
     const serialized = JSON.stringify(payload);
@@ -170,7 +177,7 @@ form.addEventListener('submit', async event => {
     const fields = Array.from(form.elements).filter(field => !field.disabled);
     submitting = true;
     fields.forEach(field => { field.disabled = true; });
-    bookingStatus.textContent = 'Die Buchung wird gespeichert …';
+    bookingStatus.textContent = approvalRequired ? 'Die Anfrage wird gespeichert …' : 'Die Buchung wird gespeichert …';
     try {
         const result = await api('/api/bookings', {
             method: 'POST',
@@ -180,6 +187,17 @@ form.addEventListener('submit', async event => {
         const formattedDate = result.day.split('-').reverse().join('.');
         const timeRange = `${timeLabel(result.hour)}–${timeLabel(result.hour + result.hours)} Uhr`;
         const total = currency.format(result.cents / 100);
+        if (result.status === 'pending') {
+            document.querySelector('#bestaetigung-titel').textContent = 'Deine Buchungsanfrage ist eingegangen.';
+            document.querySelector('#bestaetigung-daten').textContent =
+                `Anfrage ${result.reference} · ${result.room} · ${formattedDate}, ${timeRange} · ${total}`;
+            document.querySelector('#bestaetigung-mail').textContent = 'Der Verein meldet sich per E-Mail mit einer Zusage oder Absage.';
+            document.querySelector('#bestaetigung-aktionen').hidden = true;
+            form.hidden = true;
+            document.querySelector('#bestaetigung').hidden = false;
+            document.querySelector('#bestaetigung-titel').focus();
+            return;
+        }
         document.querySelector('#bestaetigung-daten').textContent =
             `Buchungsnummer ${result.reference} · ${result.room} · ${formattedDate}, ${timeRange} · ${result.hours} Std. · ${total}`;
         confirmation = {

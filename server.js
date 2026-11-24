@@ -46,6 +46,9 @@ const schema = `
         PRIMARY KEY (room, day, hour)
     );
     CREATE INDEX IF NOT EXISTS bookings_day ON bookings(day);
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS approval_status text NOT NULL DEFAULT 'direct'
+        CHECK (approval_status IN ('direct', 'pending', 'approved', 'rejected'));
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS request_email_sent boolean NOT NULL DEFAULT false;
     CREATE INDEX IF NOT EXISTS slots_day ON slots(day);
     CREATE TABLE IF NOT EXISTS booking_settings (
         id smallint PRIMARY KEY CHECK (id = 1),
@@ -157,12 +160,18 @@ function displaySettings(saved) {
     const emailKeySet = saved.emailKey === undefined ? Boolean(process.env.RESEND_API_KEY) : Boolean(saved.emailKey);
     return {
         paypal, paypalEnabled: saved.paypalEnabled ?? Boolean(paypal),
-        emailFrom, emailKeySet, emailEnabled: saved.emailEnabled ?? Boolean(emailFrom && emailKeySet)
+        emailFrom, emailKeySet, emailEnabled: saved.emailEnabled ?? Boolean(emailFrom && emailKeySet),
+        approvalRequired: saved.approvalRequired === true, approvalEmail: saved.approvalEmail ?? ''
     };
 }
 
 function paypalAvailable(settings) {
     return Boolean(settings.paypalEnabled && settings.paypal);
+}
+
+function paypalLink(settings, booking) {
+    if (!paypalAvailable(settings) || booking.paid) return null;
+    return `https://www.paypal.com/paypalme/${settings.paypal}/${(booking.cents / 100).toFixed(2)}EUR`;
 }
 
 function rateLimit(req, group, max, windowMs) {
@@ -256,7 +265,8 @@ app.get('/api/calendar', async (req, res) => {
         const starts = startTimes(openHours, hours, day === today ? Number(currentHour) : -1);
         if (starts.length) days[day] = starts;
     }
-    res.json({ days, cents: 500 + (hours - 1) * 300, paypalAvailable: paypalAvailable(displaySettings(saved)) });
+    const settings = displaySettings(saved);
+    res.json({ days, cents: 500 + (hours - 1) * 300, paypalAvailable: paypalAvailable(settings), approvalRequired: settings.approvalRequired });
 });
 
 async function sendEmail(saved, to, subject, body, key) {
@@ -279,11 +289,13 @@ async function sendEmail(saved, to, subject, body, key) {
 
 async function confirmByEmail(booking, saved) {
     if (booking.email_sent || booking.cancelled) return booking.email_sent;
+    const payment = booking.approval_status === 'approved' ? paypalLink(displaySettings(saved), booking) : null;
     const text = [
         'Verein Aktiver Musiker 2009 e. V.',
         `Deine KuH-Buchung ${reference(booking.id)} ist bestätigt.`,
         `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`,
         `Gesamtpreis: ${euro.format(booking.cents / 100)}`,
+        ...(payment ? [`PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${reference(booking.id)} im Zahlungsbetreff an.`] : []),
         'Bei Rückfragen erreichst du den Verein unter info@vam09.de.'
     ].join('\n');
     try {
@@ -293,6 +305,36 @@ async function confirmByEmail(booking, saved) {
         return true;
     } catch (error) {
         console.error('Buchungs-E-Mail fehlgeschlagen:', error.message);
+        return false;
+    }
+}
+
+async function notifyApproval(booking, saved) {
+    const pending = booking.approval_status === 'pending';
+    if (!pending && booking.approval_status !== 'rejected') return confirmByEmail(booking, saved);
+    if (pending ? booking.request_email_sent : booking.email_sent) return true;
+    const address = pending ? displaySettings(saved).approvalEmail : booking.email;
+    if (!address) return false;
+    const ref = reference(booking.id);
+    const subject = pending ? `Neue KuH-Buchungsanfrage ${ref}` : `Deine KuH-Anfrage ${ref} wurde abgelehnt`;
+    const period = `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`;
+    try {
+        let body = `${subject}.\n${period}\nBei Rückfragen erreichst du den Verein unter info@vam09.de.`;
+        if (pending) {
+            const link = new URL('/admin.html', site || `http://localhost:${port}`);
+            link.searchParams.set('tag', booking.day);
+            link.searchParams.set('anfrage', booking.id);
+            body = `${subject}\n${period}\nAnfrage in der Buchungsverwaltung prüfen: ${link.href}`;
+        }
+        const addressHash = createHash('sha256').update(address).digest('hex').slice(0, 16);
+        const sent = await sendEmail(saved, address, subject, body, `kuh-${booking.approval_status}/${booking.id}/${addressHash}`);
+        if (sent) {
+            await db.query(pending ? 'UPDATE bookings SET request_email_sent=true WHERE id=$1'
+                : 'UPDATE bookings SET email_sent=true WHERE id=$1', [booking.id]);
+        }
+        return sent;
+    } catch (error) {
+        console.error('Anfrage-E-Mail fehlgeschlagen:', error.message);
         return false;
     }
 }
@@ -309,6 +351,8 @@ app.post('/api/bookings', async (req, res) => {
         email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Bitte Name und gültige E-Mail-Adresse angeben.');
     if (hour + hours > 24) fail(400, 'Eine Buchung muss am selben Tag enden.');
     const cents = 500 + (hours - 1) * 300;
+    const saved = await readSettings();
+    const settings = displaySettings(saved);
     const booking = await transaction(async client => {
         const existing = await client.query('SELECT *, day::text AS day FROM bookings WHERE id=$1', [id]);
         if (existing.rows.length) {
@@ -317,11 +361,14 @@ app.post('/api/bookings', async (req, res) => {
                 value.name !== name || value.email !== email || value.cancelled) fail(409, 'Die Buchungsanfrage ist nicht mehr gültig.');
             return value;
         }
+        if ((req.body.approvalRequired === true) !== settings.approvalRequired) {
+            fail(409, 'Der Buchungsablauf hat sich geändert. Bitte prüfe die Buchungsdaten und wähle die Uhrzeit erneut.');
+        }
         ensureFuture(day, hour);
         const insert = await client.query(
-            `INSERT INTO bookings (id, room, day, start_hour, hours, name, email, cents)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING RETURNING *, day::text AS day`,
-            [id, room, day, hour, hours, name, email, cents]
+            `INSERT INTO bookings (id, room, day, start_hour, hours, name, email, cents, approval_status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT DO NOTHING RETURNING *, day::text AS day`,
+            [id, room, day, hour, hours, name, email, cents, settings.approvalRequired ? 'pending' : 'direct']
         );
         if (!insert.rows.length) fail(409, 'Die Anfrage wird bereits verarbeitet. Bitte kurz warten und erneut versuchen.');
         const { rows } = await client.query(
@@ -332,13 +379,14 @@ app.post('/api/bookings', async (req, res) => {
         if (rows.length !== hours) fail(409, 'Diese Zeit ist inzwischen vergeben. Bitte wähle einen anderen Termin.');
         return insert.rows[0];
     });
-    const saved = await readSettings();
-    const settings = displaySettings(saved);
+    if (booking.approval_status === 'pending') {
+        await notifyApproval(booking, saved);
+        return res.status(202).json({ status: 'pending', reference: reference(booking.id), room: rooms.get(room), day, hour, hours, cents });
+    }
     const emailSent = await confirmByEmail(booking, saved);
     res.status(201).json({
         reference: reference(booking.id), room: rooms.get(room), day, hour, hours, cents, emailSent,
-        paypal: paypalAvailable(settings) && !booking.paid
-            ? `https://www.paypal.com/paypalme/${settings.paypal}/${(cents / 100).toFixed(2)}EUR` : null
+        paypal: paypalLink(settings, booking)
     });
 });
 
@@ -368,6 +416,8 @@ app.post('/api/admin/settings', async (req, res) => {
     const paypal = paypalInput.match(paypalPattern)?.[1] ?? '';
     const emailFrom = typeof req.body?.emailFrom === 'string' ? req.body.emailFrom.trim() : '';
     const emailKey = typeof req.body?.emailKey === 'string' ? req.body.emailKey.trim() : '';
+    const approvalEmail = typeof req.body?.approvalEmail === 'string' ? req.body.approvalEmail.trim() : undefined;
+    const { approvalRequired } = req.body || {};
     if (typeof paypalEnabled !== 'boolean' || typeof emailEnabled !== 'boolean' || typeof removeEmailKey !== 'boolean') {
         fail(400, 'Bitte gültige Einstellungen übergeben.');
     }
@@ -376,13 +426,20 @@ app.post('/api/admin/settings', async (req, res) => {
         fail(400, 'Bitte eine gültige Absenderadresse eingeben.');
     }
     if (emailKey && (!providerKeyPattern.test(emailKey) || removeEmailKey)) fail(400, 'Bitte einen gültigen Resend-API-Schlüssel eingeben oder den bisherigen entfernen.');
+    if ((approvalRequired !== undefined && typeof approvalRequired !== 'boolean') ||
+        (approvalEmail && (approvalEmail.length > 254 || !emailPattern.test(approvalEmail)))) fail(400, 'Bitte eine gültige Vereinsadresse für Buchungsanfragen eingeben.');
     const updated = await transaction(async client => {
         const current = await readSettings(client, true);
         const next = { ...current, paypal, paypalEnabled, emailFrom, emailEnabled };
+        if (approvalEmail !== undefined) next.approvalEmail = approvalEmail;
+        if (approvalRequired !== undefined) next.approvalRequired = approvalRequired;
         if (removeEmailKey) next.emailKey = null;
         if (emailKey) next.emailKey = seal(emailKey);
         const result = displaySettings(next);
         if (emailEnabled && !result.emailKeySet) fail(400, 'Für E-Mail-Bestätigungen ist ein Resend-API-Schlüssel erforderlich.');
+        if (result.approvalRequired && (!result.approvalEmail || !emailEnabled || !result.emailKeySet)) {
+            fail(400, 'Für die Freigabe per E-Mail braucht ihr eine Vereinsadresse und aktivierten Mailversand.');
+        }
         await client.query('UPDATE booking_settings SET settings=$1::jsonb WHERE id=1', [JSON.stringify(next)]);
         return result;
     });
@@ -408,9 +465,9 @@ app.get('/api/admin/month', async (req, res) => {
     const [times, bookings] = await Promise.all([
         db.query(`SELECT day::text, COUNT(*)::int AS free FROM slots
                   WHERE day >= $1 AND day < $2 AND booking_id IS NULL GROUP BY day ORDER BY day`, [start, end]),
-        db.query(`SELECT day::text, COUNT(*) FILTER (WHERE NOT cancelled)::int AS booked,
-                  COUNT(*) FILTER (WHERE NOT cancelled AND NOT paid)::int AS unpaid,
-                  COUNT(*) FILTER (WHERE cancelled)::int AS cancelled
+        db.query(`SELECT day::text, COUNT(*) FILTER (WHERE NOT cancelled AND approval_status <> 'pending')::int AS booked,
+                  COUNT(*) FILTER (WHERE NOT cancelled AND NOT paid AND approval_status <> 'pending')::int AS unpaid,
+                  COUNT(*) FILTER (WHERE cancelled AND approval_status <> 'rejected')::int AS cancelled
                   FROM bookings WHERE day >= $1 AND day < $2 GROUP BY day ORDER BY day`, [start, end])
     ]);
     res.json({ times: times.rows, bookings: bookings.rows });
@@ -419,10 +476,15 @@ app.get('/api/admin/schedule', async (req, res) => {
     const day = dateValue(req.query.day);
     const [hours, bookings] = await Promise.all([
         db.query('SELECT room, hour FROM slots WHERE day=$1 AND booking_id IS NULL ORDER BY room, hour', [day]),
-        db.query(`SELECT id, room, start_hour, hours, name, email, cents, cancelled, paid, email_sent
+        db.query(`SELECT id, room, start_hour, hours, name, email, cents, cancelled, paid, email_sent, approval_status, request_email_sent
                   FROM bookings WHERE day=$1 ORDER BY start_hour, room`, [day])
     ]);
     res.json({ hours: hours.rows, bookings: bookings.rows.map(booking => ({ ...booking, reference: reference(booking.id) })) });
+});
+app.get('/api/admin/requests', async (req, res) => {
+    const { rows } = await db.query(`SELECT id, room, day::text, start_hour, request_email_sent
+        FROM bookings WHERE approval_status='pending' ORDER BY day, start_hour LIMIT 100`);
+    res.json({ requests: rows.map(row => ({ ...row, reference: reference(row.id) })) });
 });
 app.post('/api/admin/slots', async (req, res) => {
     const { room, day, hour } = slotInput(req.body || {});
@@ -463,11 +525,25 @@ app.post('/api/admin/slots', async (req, res) => {
 app.post('/api/admin/bookings/:id', async (req, res) => {
     const { id } = req.params;
     const action = req.body?.action;
-    if (!uuid.test(id) || !['cancel', 'paid', 'unpaid'].includes(action)) fail(400, 'Ungültige Buchungsaktion.');
-    await transaction(async client => {
-        const { rows } = await client.query('SELECT paid, cancelled FROM bookings WHERE id=$1 FOR UPDATE', [id]);
+    if (!uuid.test(id) || !['cancel', 'paid', 'unpaid', 'approve', 'reject', 'retry-mail'].includes(action)) fail(400, 'Ungültige Buchungsaktion.');
+    const booking = await transaction(async client => {
+        const { rows } = await client.query('SELECT *, day::text AS day FROM bookings WHERE id=$1 FOR UPDATE', [id]);
         if (!rows.length) fail(404, 'Buchung nicht gefunden.');
-        if (rows[0].cancelled) fail(409, 'Die Buchung ist bereits storniert.');
+        const current = rows[0];
+        if (action === 'retry-mail') {
+            if (current.approval_status === 'direct' || (current.cancelled && current.approval_status !== 'rejected')) fail(409, 'Für diese Buchung gibt es keine Anfrage-E-Mail.');
+            return current;
+        }
+        if (action === 'approve' || action === 'reject') {
+            const state = action === 'approve' ? 'approved' : 'rejected';
+            if (current.approval_status === state) return current;
+            if (current.approval_status !== 'pending') fail(409, 'Diese Anfrage wurde bereits entschieden.');
+            if (state === 'approved') ensureFuture(current.day, current.start_hour);
+            await client.query('UPDATE bookings SET approval_status=$2, cancelled=$3 WHERE id=$1', [id, state, state === 'rejected']);
+            if (state === 'rejected') await client.query('UPDATE slots SET booking_id=NULL WHERE booking_id=$1', [id]);
+            return { ...current, approval_status: state, cancelled: state === 'rejected' };
+        }
+        if (current.cancelled || current.approval_status === 'pending') fail(409, 'Diese Buchung ist nicht aktiv.');
         if (action === 'cancel') {
             if (rows[0].paid) fail(409, 'Bitte zuerst die Zahlung erstatten und den Zahlungsstatus zurücksetzen.');
             await client.query('UPDATE bookings SET cancelled=true WHERE id=$1', [id]);
@@ -476,6 +552,7 @@ app.post('/api/admin/bookings/:id', async (req, res) => {
             await client.query('UPDATE bookings SET paid=$2 WHERE id=$1', [id, action === 'paid']);
         }
     });
+    if (booking) return res.json({ ok: true, emailSent: await notifyApproval(booking, await readSettings()) });
     res.json({ ok: true });
 });
 

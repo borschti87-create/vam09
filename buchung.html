@@ -60,7 +60,7 @@
                         <div><dt>Zeitraum</dt><dd id="buchung-zeitraum">Noch nicht gewählt</dd></div>
                         <div class="booking-price"><dt>Gesamtpreis</dt><dd><output id="buchung-preis">5,00 €</output></dd></div>
                     </dl>
-                    <p>Du kannst die Angaben vor dem Absenden ändern. Die Buchung reserviert den Raum verbindlich. <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
+                    <p><span id="buchung-hinweis">Du kannst die Angaben vor dem Absenden ändern. Die Buchung reserviert den Raum verbindlich.</span> <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
                     <button name="buchen" type="submit" class="button button-dark" disabled>Zahlungspflichtig buchen</button>
                     <p id="buchung-status" class="feedback" role="alert"></p>
                 </section>
@@ -71,7 +71,7 @@
             <p id="bestaetigung-daten"></p>
             <p id="bestaetigung-mail"></p>
             <p id="bestaetigung-paypal-hinweis" hidden>Wenn du per PayPal zahlst, gib bitte die Buchungsnummer im Zahlungsbetreff an. Der Verein gleicht die Zahlung ab.</p>
-            <div class="actions">
+            <div class="actions" id="bestaetigung-aktionen">
                 <button id="bestaetigung-download" class="button button-line" type="button">Bestätigung herunterladen</button>
                 <a id="bestaetigung-paypal" class="button button-dark" href="#" rel="noreferrer" hidden>Mit PayPal bezahlen</a>
             </div>

@@ -18,6 +18,8 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
         globalThis.fetch = async (url, options) => {
             if (url !== 'https://api.resend.com/emails') return original(url, options);
             const data = JSON.parse(options.body);
+            if (data.subject.startsWith('Neue KuH-') && (data.to[0] !== 'board@example.invalid' || !data.text.includes('/admin.html?tag=') ||
+                !data.text.includes('&anfrage=') || data.text.includes('booking@example.invalid'))) return new Response(null, { status: 400 });
             const valid = options.headers.Authorization === 'Bearer ${mailKey}' &&
                 options.headers['Idempotency-Key'].startsWith('kuh-') && data.from === '${mailFrom}' &&
                 data.to[0].endsWith('@example.invalid');
@@ -91,7 +93,8 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     const setup = await api('/api/admin/settings', 'POST', savedSettings, true);
     assert.equal(setup.status, 200);
     assert.deepEqual(setup.body, {
-        paypal: 'TestVerein', paypalEnabled: true, emailFrom: mailFrom, emailEnabled: true, emailKeySet: true
+        paypal: 'TestVerein', paypalEnabled: true, emailFrom: mailFrom, emailEnabled: true, emailKeySet: true,
+        approvalRequired: false, approvalEmail: ''
     });
     assert.deepEqual((await api('/api/admin/settings', 'GET', undefined, true)).body, setup.body);
     assert.equal((await api('/api/admin/test-email', 'POST', { email: 'board@example.invalid' }, true)).status, 200);
@@ -101,7 +104,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal((await api('/api/admin/slots', 'POST', { ...slot, open: true }, true)).status, 200);
     assert.deepEqual((await api(`/api/availability?${urlQuery}`)).body, { starts: [16, 17, 18], cents: 800 });
     const calendar = `/api/calendar?room=proberaum&month=${month}&hours=2`;
-    assert.deepEqual((await api(calendar)).body, { days: { [tomorrow]: [16, 17, 18] }, cents: 800, paypalAvailable: true });
+    assert.deepEqual((await api(calendar)).body, { days: { [tomorrow]: [16, 17, 18] }, cents: 800, paypalAvailable: true, approvalRequired: false });
     assert.equal((await api('/api/calendar?room=proberaum&month=2026-15&hours=2')).status, 400);
 
     const base = { ...slot, hour: 17, hours: 2, name: 'Test', email: 'booking@example.invalid' };
@@ -168,6 +171,37 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal(workshopSchedule.body.bookings.find(booking => booking.id === workshop.id).cancelled, false);
     assert.equal((await api(`/api/admin/bookings/${workshop.id}`, 'POST', { action: 'cancel' }, true)).status, 200);
     assert.deepEqual(await workshopHours(after(2)), [12]);
+
+    assert.equal((await api('/api/admin/settings', 'POST', { ...savedSettings, approvalRequired: true }, true)).status, 400);
+    const approval = await api('/api/admin/settings', 'POST', { ...savedSettings, approvalRequired: true, approvalEmail: 'board@example.invalid' }, true);
+    assert.equal(approval.status, 200);
+    assert.equal(approval.body.approvalRequired, true);
+    assert.equal((await api(calendar)).body.approvalRequired, true);
+    assert.equal((await api('/api/admin/requests')).status, 401);
+    const candidate = { ...workshop, id: randomUUID() };
+    assert.equal((await api('/api/bookings', 'POST', candidate)).status, 409);
+    candidate.approvalRequired = true;
+    const pending = await api('/api/bookings', 'POST', candidate);
+    assert.equal(pending.status, 202);
+    assert.equal(pending.body.status, 'pending');
+    assert.equal(pending.body.paypal, undefined);
+    assert.equal((await api('/api/bookings', 'POST', { ...candidate, id: randomUUID() })).status, 409);
+    const pendingList = await api('/api/admin/requests', 'GET', undefined, true);
+    assert.deepEqual(pendingList.body.requests.map(row => [row.id, row.request_email_sent]), [[candidate.id, true]]);
+    const candidatePath = `/api/admin/bookings/${candidate.id}`;
+    assert.equal((await api(candidatePath, 'POST', { action: 'approve' })).status, 401);
+    assert.equal((await api(candidatePath, 'POST', { action: 'paid' }, true)).status, 409);
+    assert.deepEqual((await api(candidatePath, 'POST', { action: 'reject' }, true)).body, { ok: true, emailSent: true });
+    assert.equal((await api(candidatePath, 'POST', { action: 'approve' }, true)).status, 409);
+    assert.deepEqual(await workshopHours(after(2)), [12]);
+    const secondCandidate = { ...candidate, id: randomUUID() };
+    assert.equal((await api('/api/bookings', 'POST', secondCandidate)).status, 202);
+    const secondPath = `/api/admin/bookings/${secondCandidate.id}`;
+    assert.deepEqual((await api(secondPath, 'POST', { action: 'approve' }, true)).body, { ok: true, emailSent: true });
+    assert.equal((await api(secondPath, 'POST', { action: 'reject' }, true)).status, 409);
+    assert.deepEqual((await api('/api/admin/requests', 'GET', undefined, true)).body.requests, []);
+    assert.match((await api('/api/bookings', 'POST', secondCandidate)).body.paypal, /TestVerein\/5\.00EUR$/);
+    assert.deepEqual(await workshopHours(after(2)), []);
 
     assert.equal((await api('/api/admin/logout', 'POST', {}, true)).status, 200);
     const exit = once(process, 'exit');

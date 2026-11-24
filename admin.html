@@ -30,10 +30,15 @@
         <div id="admin-panel" hidden>
             <nav class="admin-tools" aria-label="Buchungsverwaltung">
                 <a href="#admin-monat">Monatsübersicht</a>
+                <a href="#admin-anfragen">Offene Anfragen</a>
                 <a href="#admin-slots">Zeiten und Buchungen</a>
                 <a href="#admin-einstellungen">Einstellungen</a>
                 <button id="admin-logout" class="button button-small button-line" type="button">Abmelden</button>
             </nav>
+            <section id="admin-anfragen" aria-labelledby="admin-anfragen-titel">
+                <h2 id="admin-anfragen-titel">Offene Anfragen</h2>
+                <div id="admin-requests"></div>
+            </section>
             <section id="admin-monat" aria-labelledby="admin-monat-titel">
                 <h2 id="admin-monat-titel">Monatsübersicht</h2>
                 <dl id="admin-month-totals" class="admin-metrics"></dl>
@@ -96,19 +101,25 @@
             <section id="admin-einstellungen" aria-labelledby="admin-einstellungen-titel">
                 <h2 id="admin-einstellungen-titel">Zahlung und E-Mail</h2>
                 <form id="admin-settings" class="settings-panel">
-                    <fieldset>
+                    <fieldset disabled>
                         <legend>PayPal</legend>
                         <label class="toggle-label"><input name="paypalEnabled" type="checkbox"> PayPal nach der Buchung anbieten</label>
                         <label>PayPal.Me-Name oder -Link <input name="paypal" maxlength="100" placeholder="paypal.me/vereinsname"></label>
                         <p>Der Zahlungslink enthält den Buchungsbetrag. Der Vorstand gleicht den Eingang manuell ab.</p>
                     </fieldset>
-                    <fieldset>
+                    <fieldset disabled>
                         <legend>Bestätigungs-E-Mail</legend>
                         <label class="toggle-label"><input name="emailEnabled" type="checkbox"> Buchungsbestätigungen per E-Mail senden</label>
                         <label>Verifizierte Absenderadresse <input type="email" name="emailFrom" maxlength="254" placeholder="buchung@vereinsdomain.de"></label>
                         <label>Resend-API-Schlüssel <input type="password" name="emailKey" autocomplete="new-password" maxlength="203" placeholder="re_…"></label>
                         <p id="admin-key-status">Bei leerem Feld bleibt der bisherige Schlüssel erhalten.</p>
                         <label class="toggle-label"><input name="removeEmailKey" type="checkbox"> Gespeicherten Schlüssel entfernen</label>
+                    </fieldset>
+                    <fieldset disabled>
+                        <legend>Buchungsfreigabe</legend>
+                        <label class="toggle-label"><input name="approvalRequired" type="checkbox"> Buchungen erst nach Zusage bestätigen</label>
+                        <label>Vereinsadresse für neue Anfragen <input type="email" name="approvalEmail" maxlength="254" placeholder="info@vam09.de"></label>
+                        <p>Im Freigabemodus bleiben angefragte Zeiten bis zur Entscheidung vorgemerkt. Der Verein erhält eine E-Mail mit einem Link zu der Anfrage. Voraussetzung ist der aktivierte E-Mail-Versand.</p>
                     </fieldset>
                     <div class="admin-actions"><button class="button button-dark" type="submit" disabled>Einstellungen speichern</button></div>
                     <p id="admin-settings-status" class="feedback" role="status"></p>

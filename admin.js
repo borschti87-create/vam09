@@ -3,6 +3,8 @@ const panel = document.querySelector('#admin-panel');
 const schedule = document.querySelector('#admin-slots');
 const message = document.querySelector('#admin-status');
 const bookings = document.querySelector('#admin-bookings');
+const requests = document.querySelector('#admin-requests');
+const deepLink = new URLSearchParams(location.search);
 const monthInput = document.querySelector('#admin-month');
 const previousMonth = document.querySelector('#admin-month-prev');
 const nextMonth = document.querySelector('#admin-month-next');
@@ -49,6 +51,7 @@ function showLogin() {
     monthRequest?.abort();
     settingsForm.reset();
     settingsForm.querySelector('button').disabled = true;
+    settingsForm.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = true; });
     testEmailForm.reset();
     monthDays.replaceChildren();
     monthTotals.replaceChildren();
@@ -60,6 +63,7 @@ function showLogin() {
     weekdays.hidden = true;
     slotStatus.textContent = '';
     bookings.replaceChildren();
+    requests.replaceChildren();
     document.querySelector('#admin-hours').textContent = '';
 }
 
@@ -82,9 +86,15 @@ function bookingAction(booking, label, action, confirmText) {
         if (confirmText && !window.confirm(confirmText)) return;
         button.disabled = true;
         try {
-            await api(`/api/admin/bookings/${booking.id}`, { action });
-            message.textContent = 'Buchung aktualisiert.';
-            await Promise.all([load(), loadMonth()]);
+            const result = await api(`/api/admin/bookings/${booking.id}`, { action });
+            if (action === 'retry-mail') {
+                message.textContent = result.emailSent ? 'E-Mail verschickt.' : 'E-Mail konnte nicht verschickt werden.';
+            } else {
+                message.textContent = result.emailSent === false
+                    ? 'Entscheidung gespeichert. Die E-Mail konnte nicht verschickt werden.'
+                    : 'Buchung aktualisiert.';
+            }
+            await Promise.all([load(), loadMonth(), loadRequests()]);
         } catch (error) {
             showError(error);
             button.disabled = false;
@@ -96,25 +106,59 @@ function bookingAction(booking, label, action, confirmText) {
 function displayBooking(booking) {
     const card = document.createElement('article');
     card.className = 'admin-booking';
+    card.id = `buchung-${booking.id}`;
+    card.tabIndex = -1;
     const paymentStatus = booking.paid ? 'bezahlt' : 'unbezahlt';
-    const status = booking.cancelled ? 'Storniert' : `Bestätigt · ${paymentStatus}`;
+    const pending = booking.approval_status === 'pending';
+    const rejected = booking.approval_status === 'rejected';
+    const status = pending ? 'Anfrage offen' : rejected ? 'Anfrage abgelehnt' : booking.cancelled ? 'Storniert' : `Bestätigt · ${paymentStatus}`;
     card.append(
         text('h3', `${hourLabel(booking.start_hour)}–${hourLabel(booking.start_hour + booking.hours)} · ${rooms[booking.room]}`),
         text('p', `${booking.reference} · ${status} · ${euro.format(booking.cents / 100)}`),
         text('p', `${booking.name} · ${booking.email}`)
     );
-    if (!booking.cancelled) {
-        const actions = document.createElement('div');
-        actions.className = 'admin-actions';
+    const actions = document.createElement('div');
+    actions.className = 'admin-actions';
+    if (pending) {
+        actions.append(
+            bookingAction(booking, 'Zusage erteilen', 'approve'),
+            bookingAction(booking, 'Anfrage ablehnen', 'reject', 'Anfrage ablehnen und die vorgemerkten Stunden freigeben?')
+        );
+    } else if (!booking.cancelled) {
         actions.append(
             booking.paid
                 ? bookingAction(booking, 'Zahlungsstatus zurücksetzen', 'unpaid', 'Hast du die Zahlung bereits erstattet oder möchtest du einen Erfassungsfehler korrigieren?')
                 : bookingAction(booking, 'Zahlung verbuchen', 'paid'),
             bookingAction(booking, 'Stornieren', 'cancel', 'Termin stornieren und die Stunden wieder freigeben? Bitte informiere die buchende Person.')
         );
-        card.append(actions);
     }
+    if ((pending && !booking.request_email_sent) || (rejected && !booking.email_sent) ||
+        (booking.approval_status === 'approved' && !booking.cancelled && !booking.email_sent)) {
+        actions.append(bookingAction(booking, 'E-Mail erneut versuchen', 'retry-mail'));
+    }
+    if (actions.childElementCount) card.append(actions);
     return card;
+}
+
+async function loadRequests() {
+    try {
+        const result = await api('/api/admin/requests');
+        if (panel.hidden) return;
+        const entries = result.requests.map(request => {
+            const url = new URLSearchParams({ tag: request.day, anfrage: request.id });
+            const label = `${dateLabel.format(new Date(request.day))}, ${hourLabel(request.start_hour)} · ${rooms[request.room]} · ${request.reference}`;
+            const link = text('a', label);
+            link.className = 'text-link';
+            link.href = `admin.html?${url}`;
+            const item = document.createElement('p');
+            item.append(link);
+            if (!request.request_email_sent) item.append(' · E-Mail ausstehend');
+            return item;
+        });
+        requests.replaceChildren(...(entries.length ? entries : [text('p', 'Zurzeit gibt es keine offenen Anfragen.')]));
+    } catch (error) {
+        showError(error);
+    }
 }
 
 async function load() {
@@ -140,10 +184,13 @@ async function load() {
 async function showPanel() {
     login.hidden = true;
     panel.hidden = false;
+    const linkedDay = deepLink.get('tag') || '';
+    if (/^20\d{2}-\d{2}-\d{2}$/.test(linkedDay)) schedule.elements.day.value = linkedDay;
     if (!schedule.elements.day.value) schedule.elements.day.value = today;
-    if (!monthInput.value) monthInput.value = schedule.elements.day.value.slice(0, 7);
+    monthInput.value = schedule.elements.day.value.slice(0, 7);
     updateRange();
-    await Promise.all([load(), loadMonth(), loadSettings()]);
+    await Promise.all([load(), loadMonth(), loadSettings(), loadRequests()]);
+    document.getElementById(`buchung-${deepLink.get('anfrage')}`)?.focus();
 }
 
 function updateRange() {
@@ -241,6 +288,8 @@ function displaySettings(result) {
     settingsForm.elements.paypalEnabled.checked = result.paypalEnabled;
     settingsForm.elements.emailFrom.value = result.emailFrom;
     settingsForm.elements.emailEnabled.checked = result.emailEnabled;
+    settingsForm.elements.approvalRequired.checked = result.approvalRequired;
+    settingsForm.elements.approvalEmail.value = result.approvalEmail;
     settingsForm.elements.emailKey.value = '';
     settingsForm.elements.removeEmailKey.checked = false;
     document.querySelector('#admin-key-status').textContent = result.emailKeySet
@@ -253,6 +302,7 @@ function displaySettings(result) {
 async function loadSettings() {
     try {
         displaySettings(await api('/api/admin/settings'));
+        settingsForm.querySelectorAll('fieldset').forEach(fieldset => { fieldset.disabled = false; });
         settingsForm.querySelector('button').disabled = false;
     } catch (error) {
         showError(error);
@@ -270,7 +320,8 @@ settingsForm.addEventListener('submit', async event => {
         displaySettings(await api('/api/admin/settings', {
             paypal: fields.paypal.value, paypalEnabled: fields.paypalEnabled.checked,
             emailFrom: fields.emailFrom.value, emailEnabled: fields.emailEnabled.checked,
-            emailKey: fields.emailKey.value, removeEmailKey: fields.removeEmailKey.checked
+            emailKey: fields.emailKey.value, removeEmailKey: fields.removeEmailKey.checked,
+            approvalRequired: fields.approvalRequired.checked, approvalEmail: fields.approvalEmail.value
         }));
         settingsStatus.textContent = 'Einstellungen gespeichert.';
     } catch (error) {
