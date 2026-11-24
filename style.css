@@ -5,6 +5,9 @@
     --white: #fffaf7;
     --salmon: #f4a58e;
     --salmon-light: #f7c2b1;
+    --kuh-yellow: #e5b74f;
+    --kuh-yellow-soft: #f3d88f;
+    --kuh-ink: #674909;
     --rust: #9c3827;
     --rule: #dccac2;
     --radius: 1.3rem;
@@ -45,7 +48,7 @@ address { font-style: normal; }
 .button:hover { text-decoration: underline; }
 .button-small { min-height: 2.6rem; padding: .5rem .9rem; }
 .button-dark { background: var(--ink); color: var(--white); }
-.button-salmon { background: var(--salmon); color: var(--ink); }
+.button-kuh { background: var(--kuh-yellow); color: var(--ink); }
 .button-line { border-color: currentColor; }
 .actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.55rem; }
 .eyebrow { margin: 0 0 1rem; font-weight: 800; letter-spacing: .10em; text-transform: uppercase; font-size: .875rem; }
@@ -58,8 +61,9 @@ address { font-style: normal; }
 .hero-image img { width: 100%; height: auto; aspect-ratio: 1.2; object-fit: cover; }
 .hero-image figcaption { padding: .7rem 1rem; font-size: .9rem; }
 
-.feature { background: var(--salmon-light); padding-block: clamp(3.25rem, 7vw, 6.1rem); }
+.feature { background: var(--kuh-yellow-soft); padding-block: clamp(3.25rem, 7vw, 6.1rem); }
 .feature-intro, .section-heading { display: grid; grid-template-columns: 1.3fr .7fr; align-items: end; gap: 1.35rem 3rem; margin-bottom: 2rem; }
+.feature .mark-dot { color: var(--kuh-ink); }
 .feature-intro h2 { font-size: clamp(2.3rem, 6vw, 5.3rem); }
 .feature-intro blockquote { margin-top: .8rem; font-family: Georgia, serif; font-style: italic; font-size: 1.2rem; }
 .section-heading > p { color: var(--muted); margin: 0; }
@@ -168,7 +172,12 @@ address { font-style: normal; }
 .admin-actions button { font-family: inherit; font-size: 1rem; cursor: pointer; }
 .admin-booking { overflow-wrap: anywhere; }
 
-.booking-page { max-width: 69rem; }
+.booking-page {
+    --salmon-light: var(--kuh-yellow-soft);
+    --rust: var(--kuh-ink);
+    max-width: 69rem;
+}
+.booking-page .booking-summary .button-dark { background: var(--kuh-yellow); color: var(--ink); }
 .booking-page > .booking-form { background: transparent; padding: 0; }
 .booking-controls, .settings-panel fieldset {
     margin: 0;
@@ -305,7 +314,12 @@ address { font-style: normal; }
 }
 .kuh-brand img { width: clamp(3.15rem, 6vw, 4.65rem); height: auto; }
 .kuh-brand:hover span { text-decoration: underline; }
-.home-header .nav-booking { color: var(--rust); }
+.home-header .nav-booking {
+    padding: .35rem .55rem;
+    border-radius: .4rem;
+    background: var(--kuh-yellow);
+    color: var(--ink);
+}
 .footer-cookie-note { margin-inline: auto; padding-block: .6rem 1rem; border-top: 1px solid #62524c; font-size: .875rem; }
 
 .checkout-summary {
