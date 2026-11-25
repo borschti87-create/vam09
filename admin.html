@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>KuH-Buchungsverwaltung · VAM 09</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="admin.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#inhalt">Zum Inhalt</a>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="wordmark" href="index.html" aria-label="VAM 09, Startseite">VAM<span>09</span><span class="mark-dot">.</span></a>
+            <a class="button button-small button-line" href="buchung.html">Zur Raumbuchung</a>
+        </div>
+    </header>
+    <main class="section shell subpage admin-page" id="inhalt">
+        <h1>Buchungen verwalten.</h1>
+        <noscript><p>Für die Verwaltung ist JavaScript erforderlich.</p></noscript>
+        <form id="admin-login" class="booking-form" hidden>
+            <div class="booking-fields">
+                <label>Benutzername <input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="64" required></label>
+                <label>Passwort <input type="password" name="password" autocomplete="current-password" required></label>
+            </div>
+            <div class="admin-actions"><button type="submit" class="button button-dark">Anmelden</button></div>
+        </form>
+        <p id="admin-status" class="feedback" role="status"></p>
+        <div id="admin-panel" hidden>
+            <nav class="admin-tools" aria-label="Buchungsverwaltung">
+                <a href="#admin-monat">Monatsübersicht</a>
+                <a href="#admin-anfragen">Offene Anfragen</a>
+                <a href="#admin-slots">Zeiten und Buchungen</a>
+                <a href="#admin-einstellungen">Einstellungen</a>
+                <button id="admin-logout" class="button button-small button-line" type="button">Abmelden</button>
+            </nav>
+            <section id="admin-anfragen" aria-labelledby="admin-anfragen-titel">
+                <h2 id="admin-anfragen-titel">Offene Anfragen</h2>
+                <div id="admin-requests"></div>
+            </section>
+            <section id="admin-monat" aria-labelledby="admin-monat-titel">
+                <h2 id="admin-monat-titel">Monatsübersicht</h2>
+                <dl id="admin-month-totals" class="admin-metrics"></dl>
+                <div class="admin-scheduling">
+                    <div class="calendar-panel admin-calendar">
+                        <div class="calendar-toolbar">
+                            <button id="admin-month-prev" class="button button-small button-line" type="button" aria-label="Vorheriger Monat">‹</button>
+                            <label class="admin-month-label"><span class="visually-hidden">Monat auswählen</span><input id="admin-month" type="month" min="2000-01" max="2099-12" required></label>
+                            <button id="admin-month-next" class="button button-small button-line" type="button" aria-label="Nächster Monat">›</button>
+                        </div>
+                        <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+                            <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+                        </div>
+                        <div id="admin-month-days" class="calendar-grid" role="group" aria-label="Kalendertage"></div>
+                        <p class="admin-calendar-legend">
+                            <span><i class="free-mark" aria-hidden="true"></i> Freie Stunden</span>
+                            <span><i class="booked-mark" aria-hidden="true"></i> Buchung</span>
+                        </p>
+                        <p id="admin-month-status" class="feedback" role="status"></p>
+                    </div>
+                    <form id="admin-slots" class="booking-form">
+                        <h2>Zeitfenster verwalten</h2>
+                        <div class="booking-fields admin-slot-fields">
+                            <label>Startdatum <input type="date" name="day" required></label>
+                            <label>Enddatum (optional) <input type="date" name="until"></label>
+                            <label>Raum
+                                <select name="room">
+                                    <option value="proberaum">KuH-Proberaum</option>
+                                    <option value="werkstatt">KuH-DIY-Werkstatt</option>
+                                </select>
+                            </label>
+                            <div class="admin-hour-fields">
+                                <label>Von <select name="hour" required></select></label>
+                                <label>Bis <select name="end" required></select></label>
+                            </div>
+                        </div>
+                        <fieldset id="admin-weekdays" class="admin-weekdays" hidden>
+                            <legend>Wochentage im Zeitraum</legend>
+                            <div>
+                                <label><input type="checkbox" name="weekday" value="1" checked> Mo</label>
+                                <label><input type="checkbox" name="weekday" value="2" checked> Di</label>
+                                <label><input type="checkbox" name="weekday" value="3" checked> Mi</label>
+                                <label><input type="checkbox" name="weekday" value="4" checked> Do</label>
+                                <label><input type="checkbox" name="weekday" value="5" checked> Fr</label>
+                                <label><input type="checkbox" name="weekday" value="6" checked> Sa</label>
+                                <label><input type="checkbox" name="weekday" value="7" checked> So</label>
+                            </div>
+                        </fieldset>
+                        <div class="admin-actions">
+                            <button type="submit" name="action" value="open" class="button button-dark">Zeiten freigeben</button>
+                            <button type="submit" name="action" value="close" class="button button-line">Freie Zeiten sperren</button>
+                        </div>
+                        <p id="admin-slot-status" class="feedback" role="status"></p>
+                        <p id="admin-hours" class="feedback"></p>
+                    </form>
+                </div>
+            </section>
+            <h2 id="admin-bookings-title">Buchungen am gewählten Tag</h2>
+            <div id="admin-bookings"></div>
+            <section id="admin-einstellungen" aria-labelledby="admin-einstellungen-titel">
+                <h2 id="admin-einstellungen-titel">Zahlung und E-Mail</h2>
+                <form id="admin-settings" class="settings-panel">
+                    <fieldset disabled>
+                        <legend>PayPal</legend>
+                        <label class="toggle-label"><input name="paypalEnabled" type="checkbox"> PayPal nach der Buchung anbieten</label>
+                        <label>PayPal.Me-Name oder -Link <input name="paypal" maxlength="100" placeholder="paypal.me/vereinsname"></label>
+                        <p>Der Zahlungslink enthält den Buchungsbetrag. Der Vorstand gleicht den Eingang manuell ab.</p>
+                    </fieldset>
+                    <fieldset disabled>
+                        <legend>Bestätigungs-E-Mail</legend>
+                        <label class="toggle-label"><input name="emailEnabled" type="checkbox"> Buchungsbestätigungen per E-Mail senden</label>
+                        <label>Verifizierte Absenderadresse <input type="email" name="emailFrom" maxlength="254" placeholder="buchung@vereinsdomain.de"></label>
+                        <label>Resend-API-Schlüssel <input type="password" name="emailKey" autocomplete="new-password" maxlength="203" placeholder="re_…"></label>
+                        <p id="admin-key-status">Bei leerem Feld bleibt der bisherige Schlüssel erhalten.</p>
+                        <label class="toggle-label"><input name="removeEmailKey" type="checkbox"> Gespeicherten Schlüssel entfernen</label>
+                    </fieldset>
+                    <fieldset disabled>
+                        <legend>Buchungsfreigabe</legend>
+                        <label class="toggle-label"><input name="approvalRequired" type="checkbox"> Buchungen erst nach Zusage bestätigen</label>
+                        <label>Vereinsadresse für neue Anfragen <input type="email" name="approvalEmail" maxlength="254" placeholder="kuh_stassfurt@mail.de"></label>
+                        <p>Im Freigabemodus bleiben angefragte Zeiten bis zur Entscheidung vorgemerkt. Der Verein erhält eine E-Mail mit einem Link zu der Anfrage. Voraussetzung ist der aktivierte E-Mail-Versand.</p>
+                    </fieldset>
+                    <div class="admin-actions"><button class="button button-dark" type="submit" disabled>Einstellungen speichern</button></div>
+                    <p id="admin-settings-status" class="feedback" role="status"></p>
+                </form>
+                <form id="admin-test-email" class="settings-panel">
+                    <label>Test-E-Mail an <input name="email" type="email" maxlength="254" value="kuh_stassfurt@mail.de" required></label>
+                    <label class="toggle-label"><input name="sandbox" type="checkbox"> Resend-Testabsender ohne eigene Absenderdomain verwenden</label>
+                    <p>Im Resend-Testmodus muss die Empfängeradresse zum Resend-Konto gehören. Die Testmail enthält einen Musterbeleg.</p>
+                    <button class="button button-line" type="submit" disabled>Test-E-Mail senden</button>
+                    <p id="admin-test-status" class="feedback" role="status"></p>
+                </form>
+            </section>
+        </div>
+    </main>
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <a href="index.html">Verein Aktiver Musiker 2009 e. V.</a>
+            <div class="footer-links"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></div>
+        </div>
+    </footer>
+</body>
+</html>

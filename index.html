@@ -1,149 +1,263 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VORSCHAU | VAM 09 e.V. Staßfurt</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <meta name="description" content="Verein Aktiver Musiker 2009 e. V. in Staßfurt: Proberäume, Musikstudio, Stammtisch und der Kultur- und Innovationshof.">
+    <meta name="referrer" content="no-referrer">
+    <title>VAM 09 · Musik und Kultur in Staßfurt</title>
     <link rel="stylesheet" href="style.css">
+    <script src="home.js" defer></script>
 </head>
 <body>
-
-    <header class="main-header">
-        <div class="nav-container container">
-            <div class="logo">VAM 09</div>
-            <nav id="main-nav">
-                <ul class="nav-list">
-                    <li><a href="#home">Start</a></li>
-                    <li><a href="#about">Über uns</a></li>
-                    <li><a href="#join">Mitmachen</a></li>
-                    <li><a href="#rooms">Räume</a></li>
-                    <li><a href="#rental">Verleih</a></li>
-                    <li><a href="#events">Events</a></li>
-                    <li><a href="#spende">Spende</a></li>
-                    <li class="nav-social"><a href="https://www.facebook.com/VAM2009/" target="_blank"><i class="fab fa-facebook"></i></a></li>
-                    <li class="nav-social"><a href="https://www.instagram.com/vam_2009/" target="_blank"><i class="fab fa-instagram"></i></a></li>
-                    <li class="nav-social"><a href="https://www.youtube.com/@VAM2009" target="_blank"><i class="fab fa-youtube"></i></a></li>
-                </ul>
+    <a class="skip-link" href="#home">Zum Inhalt</a>
+    <header class="site-header home-header">
+        <div class="social-bar">
+            <nav class="shell social-links" aria-label="Soziale Medien">
+                <a href="https://www.facebook.com/VAM2009/" rel="noreferrer"><span class="social-icon facebook-icon" aria-hidden="true">f</span><span class="social-name">Facebook</span></a>
+                <a href="https://www.instagram.com/vam_2009/" rel="noreferrer"><span class="social-icon instagram-icon" aria-hidden="true"></span><span class="social-name">Instagram</span></a>
+                <a href="https://www.youtube.com/@VAM2009" rel="noreferrer"><span class="social-icon youtube-icon" aria-hidden="true"></span><span class="social-name">YouTube</span></a>
             </nav>
         </div>
-    </header>
-
-    <main>
-        <section id="home" class="hero-full">
-            <div class="video-bg">
-                <iframe 
-                    src="https://www.youtube.com/embed/aikE_XJ-kDQ?autoplay=1&mute=1&loop=1&playlist=aikE_XJ-kDQ&controls=0&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
+        <div class="shell header-inner">
+            <div class="header-brands">
+                <a class="vam-brand" href="#home" aria-label="VAM 09, Startseite">
+                    <img src="assets/vam-vereinslogo.webp" alt="" width="450" height="300">
+                </a>
+                <a class="kuh-brand" href="#kuh">
+                    <img src="assets/kuh-logo.webp" alt="" width="475" height="349">
+                    <span>Kultur- und<br>Innovationshof</span>
+                </a>
             </div>
-            <div class="hero-content container">
-                <h1>Musik verbindet<br>Staßfurt</h1>
-                <p>Kreativ. Leidenschaftlich. Erfahren.</p>
-                <a href="#join" class="btn-main">Jetzt Mitmachen</a>
+            <button id="mobile-menu" class="mobile-menu" type="button" aria-controls="hauptnavigation" aria-expanded="false" hidden>
+                <span class="mobile-menu-icon" aria-hidden="true"></span><span class="mobile-menu-label">Menü</span>
+            </button>
+            <nav id="hauptnavigation" aria-label="Hauptnavigation">
+                <a class="nav-booking" href="buchung.html">Raum buchen</a>
+                <a href="#angebote">Angebote</a>
+                <a href="#about">Verein</a>
+                <a href="#events">Termine</a>
+                <a class="mobile-member-link" href="downloads/mitgliedsantrag.pdf">Mitgliedsantrag (PDF)</a>
+            </nav>
+            <a class="button button-small button-dark desktop-member-link" href="downloads/mitgliedsantrag.pdf">Mitmachen <span class="visually-hidden">(PDF-Mitgliedsantrag)</span></a>
+        </div>
+    </header>
+    <main id="home">
+        <section class="hero shell" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <p class="eyebrow">Verein Aktiver Musiker 2009 e. V. · Staßfurt</p>
+                <h1 id="hero-title">Hier spielt<br>die <em>Musik.</em></h1>
+                <p class="intro">Wir schaffen Raum für Musik und Kultur im Salzlandkreis. Für alle, die proben, gemeinsam etwas auf die Beine stellen oder einfach mit anpacken wollen.</p>
+                <div class="actions">
+                    <a class="button button-kuh" href="#kuh">KuH kennenlernen</a>
+                    <a class="button button-line" href="downloads/mitgliedsantrag.pdf">Jetzt mitmachen (PDF)</a>
+                </div>
+            </div>
+            <figure class="hero-film">
+                <video controls autoplay muted loop playsinline width="1280" height="720"
+                    poster="assets/vam-vereinsfilm-poster.webp" aria-labelledby="vereinsfilm-titel">
+                    <source src="assets/vam-vereinsfilm-stumm.mp4" type="video/mp4">
+                    <a href="assets/vam-vereinsfilm-stumm.mp4">Vereinsfilm als MP4 öffnen</a>
+                </video>
+                <figcaption id="vereinsfilm-titel">Lust, was zu bewegen? <span>Vereinsfilm</span></figcaption>
+            </figure>
+        </section>
+
+        <section class="feature" id="kuh" aria-labelledby="kuh-title">
+            <div class="shell">
+                <div class="feature-intro">
+                    <div>
+                        <p class="eyebrow">Ein Projekt des VAM 09</p>
+                        <h2 id="kuh-title">Kultur- und<br>Innovationshof<span class="mark-dot">.</span></h2>
+                    </div>
+                    <div>
+                        <p>Im KuH geht es über Musik hinaus. Hier kannst du proben, Instrumente reparieren oder eigene Projekte umsetzen. Der Kultur- und Innovationshof entsteht als Ort, an dem Menschen aus der Region ihre Ideen gemeinschaftlich verwirklichen können.</p>
+                        <blockquote>„Räume machen Menschen, Menschen machen Räume.“</blockquote>
+                    </div>
+                </div>
+                <div class="project-grid">
+                    <article class="project-card" id="kuh-proberaum">
+                        <img src="assets/kuh-proberaum.webp" alt="Einblick in den KuH-Proberaum" width="768" height="1024" loading="lazy">
+                        <div class="project-copy">
+                            <h3>Proberaum</h3>
+                            <p>Für Bands, Solo-Musikerinnen und -Musiker und alle, die bei einer Session Neues ausprobieren wollen.</p>
+                            <p class="price"><strong>5 €</strong> erste Stunde · <strong>3 €</strong> je weitere Stunde<br>Für Vereinsmitglieder kostenlos.</p>
+                            <a class="button button-small button-kuh" href="buchung.html?raum=proberaum">Proberaum buchen</a>
+                            <ul class="room-gallery" aria-label="Fotos vom Proberaum">
+                                <li><a href="assets/kuh-proberaum-sofa.webp">
+                                    <img src="assets/kuh-proberaum-sofa.webp" alt="Sitzecke und Verstärker im KuH-Proberaum" width="960" height="1280" loading="lazy">
+                                </a></li>
+                                <li><a href="assets/kuh-proberaum-tontechnik.webp">
+                                    <img src="assets/kuh-proberaum-tontechnik.webp" alt="Tontechnik-Rack und Lautsprecher im KuH-Proberaum" width="960" height="1280" loading="lazy">
+                                </a></li>
+                            </ul>
+                        </div>
+                    </article>
+                    <article class="project-card" id="werkstatt">
+                        <img src="assets/kuh-werkstatt.webp" alt="Einblick in die KuH-Werkstatt" width="1024" height="768" loading="lazy">
+                        <div class="project-copy">
+                            <h3>DIY-Werkstatt</h3>
+                            <p>Repariere ein Instrument, baue ein Möbelstück oder bring dein nächstes Upcycling-Projekt mit.</p>
+                            <p class="price"><strong>5 €</strong> erste Stunde · <strong>3 €</strong> je weitere Stunde<br>Für Vereinsmitglieder kostenlos.</p>
+                            <a class="button button-small button-kuh" href="buchung.html?raum=werkstatt">Werkstatt buchen</a>
+                            <ul class="room-gallery" aria-label="Fotos von der Werkstatt">
+                                <li><a href="assets/kuh-werkstatt-instrumente.webp">
+                                    <img src="assets/kuh-werkstatt-instrumente.webp" alt="Instrumente und Geräte in der KuH-Werkstatt" width="1050" height="1259" loading="lazy">
+                                </a></li>
+                                <li><a href="assets/kuh-werkstatt-gitarre.webp">
+                                    <img src="assets/kuh-werkstatt-gitarre.webp" alt="Gitarre auf der Werkbank" width="960" height="1280" loading="lazy">
+                                </a></li>
+                            </ul>
+                        </div>
+                    </article>
+                </div>
+                <article class="klangraum" id="klangraum" aria-labelledby="klangraum-title">
+                    <div>
+                        <p class="eyebrow">Offenes Studio &amp; Bürgertreff</p>
+                        <h3 id="klangraum-title">KlangRaum</h3>
+                        <p>Im KlangRaum kannst du Musik machen, Podcasts aufnehmen oder dich mit anderen treffen.</p>
+                        <a class="button button-small button-kuh" href="mailto:kuh_stassfurt@mail.de">Kontakt zum KuH</a>
+                    </div>
+                    <a class="klangraum-flyer" href="assets/kuh-klangraum-flyer.webp" aria-label="KlangRaum-Flyer in voller Größe öffnen">
+                        <img src="assets/kuh-klangraum-flyer.webp" width="1073" height="1404" alt="" loading="lazy">
+                    </a>
+                </article>
             </div>
         </section>
 
-        <div class="main-wrapper container">
-            <div class="content-grid">
-                
-                <div id="about" class="info-card span-2">
-                    <h2 class="card-title">Über uns</h2>
-                    <p class="lead-text">Gegründet am 03.04.2009. Wir fördern Musiker aller Genres und Generationen.</p>
-                    <p><strong>Sitz des Vereins:</strong> Hugo-Junkers-Allee, 39128 Magdeburg (Geschäftsstelle)</p>
-                    <div class="team-grid">
-                        <div class="team-item"><strong>Steve Peterka</strong> 1. Vorsitzender</div>
-                        <div class="team-item"><strong>Chris Brennecke</strong> 2. Vorsitzender</div>
-                        <div class="team-item"><strong>Kevin Christoph</strong> Kassenwart</div>
+        <section class="section shell" id="angebote" aria-labelledby="angebote-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Vereinsheim · Schlachthofstraße 10</p>
+                    <h2 id="angebote-title">Platz für Musik.</h2>
+                </div>
+                <p>Seit 2010 ist das Vereinsheim in Staßfurt unser Treffpunkt für Proben, Aufnahmen und den Austausch in der lokalen Musikszene.</p>
+            </div>
+            <div class="offer-list">
+                <article id="rooms">
+                    <h3>Proberäume</h3>
+                    <p>Sieben Räume mit je rund 20 m² stehen Mitgliedern rund um die Uhr zur Verfügung. Die Nutzungsgebühr beträgt 75 € zuzüglich aller Nebenkosten. Frag uns nach der aktuellen Verfügbarkeit und den Konditionen.</p>
+                    <a class="text-link" href="mailto:info@vam09.de?subject=Vereinsproberaum">Verfügbarkeit erfragen</a>
+                </article>
+                <article id="studio">
+                    <h3>Musikstudio</h3>
+                    <p>Vereinsmitglieder können nach Absprache eigene Musik aufnehmen und sich im Verein Unterstützung holen. Das Studio steht auf Anfrage auch für euch zur Verfügung.</p>
+                    <a class="text-link" href="mailto:studio@vam09.de">Studio anfragen</a>
+                </article>
+                <article id="stammtisch">
+                    <h3>Musikerstammtisch</h3>
+                    <p>Beim Stammtisch im Vereinsheim treffen sich Mitglieder und Interessierte. Getränke gibt es gegen einen kleinen Beitrag.</p>
+                    <a class="text-link" href="#events">Zu den Terminen</a>
+                </article>
+                <article id="veranstaltungen">
+                    <h3>Veranstaltungen</h3>
+                    <p>Wir möchten lokalen Bands und Nachwuchsacts eine Bühne geben. Zu unseren bisherigen Formaten gehören die Rockwiese, das Salzlandfest und der Musikflohmarkt.</p>
+                    <a class="text-link" href="archiv.html">Ins Vereinsarchiv</a>
+                </article>
+                <article id="rental">
+                    <h3>Geräteverleih</h3>
+                    <p>LED-Lichtset mit Stativ, aktive 12-Zoll-Box und weitere Technik auf Anfrage. Wir klären Preis und Verfügbarkeit mit dir vorab.</p>
+                    <a class="text-link" href="mailto:info@vam09.de?subject=Ger%C3%A4teverleih">Technik anfragen</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="band" id="about" aria-labelledby="about-title">
+            <div class="shell band-grid">
+                <div>
+                    <p class="eyebrow">Seit 2009 im Salzlandkreis</p>
+                    <h2 id="about-title">Der Verein.</h2>
+                    <p>Der Verein Aktiver Musiker 2009 e. V. wurde am 3. April 2009 in Förderstedt gegründet. Wir fördern die lokale Musikszene über Genres und Generationen hinweg. Dazu bringen wir Musikschaffende, Nachwuchs, Schulen und andere Kulturakteure zusammen.</p>
+                    <h3 id="vorstand">Vorstand</h3>
+                    <p>Steve Peterka · 1. Vorsitzender<br>Chris Brennecke · 2. Vorsitzender<br>Kevin Christoph · Kassenwart</p>
+                </div>
+                <ol class="timeline" aria-label="Vereinsgeschichte">
+                    <li><strong>2009</strong> Gründung in Förderstedt</li>
+                    <li><strong>2010</strong> Einzug ins Vereinsheim in Staßfurt</li>
+                    <li><strong>2011</strong> Salzlandfest und erste Rockwiese in Förderstedt</li>
+                    <li><strong>2012</strong> Zweite Rockwiese in Staßfurt</li>
+                    <li><strong>2023</strong> Eigene Bühne auf dem Salzlandfest</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section shell" id="events" aria-labelledby="events-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Termine und Rückblicke</p>
+                    <h2 id="events-title">Was bei uns läuft.</h2>
+                </div>
+                <p>Frag uns nach dem nächsten Stammtisch oder einer Gelegenheit, im Vereinsheim vorbeizuschauen.</p>
+            </div>
+            <div class="event-grid">
+                <article><time datetime="2025-08-30">30. August 2025</time><h3>Musikflohmarkt</h3><p>Tag der offenen Tür mit Live-Musik, Flohmarkt und Instrumenten zum Ausprobieren.</p></article>
+                <article><time datetime="2024-05-25">25. Mai 2024</time><h3>Tag der offenen Tür</h3><p>Musikflohmarkt mit Vereinsmusikern und LAD PETE aus Erfurt.</p></article>
+                <article><time datetime="2024-04-05">5. April 2024</time><h3>Stammtisch</h3><p>Ein Abend im Vereinsheim für Mitglieder, Freundinnen, Freunde und Interessierte.</p></article>
+            </div>
+            <a class="button button-dark" href="archiv.html">Alle Rückblicke</a>
+        </section>
+
+        <section class="join-section" id="join" aria-labelledby="join-title">
+            <div class="shell join-grid">
+                <div>
+                    <p class="eyebrow">Mitglied werden</p>
+                    <h2 id="join-title">Mach mit.</h2>
+                    <p>Du spielst Musik oder hast Lust, im Salzlandkreis etwas zu bewegen? Komm zum Stammtisch oder melde dich bei uns. Du kannst aktiv mitwirken oder den Verein als Fördermitglied unterstützen.</p>
+                    <div class="actions">
+                        <a class="button button-dark" href="downloads/mitgliedsantrag.pdf">Mitgliedsantrag (PDF)</a>
+                        <a class="button button-line" href="mailto:info@vam09.de?subject=Mitgliedschaft">Kontakt aufnehmen</a>
                     </div>
-                    <a href="satzung.html" class="btn-outline">Zur Satzung</a>
+                    <img class="member-shirt" src="assets/vam-vereinsshirt.webp" width="960" height="1280" loading="lazy"
+                        alt="Schwarzes Vereinsshirt mit lachsfarbenem VAM-Logo auf dem Rücken">
                 </div>
-
-                <div id="join" class="info-card accent-card">
-                    <h3>Mitglied werden</h3>
-                    <p>Werde Teil der VAM-Familie als aktives oder förderndes Mitglied.</p>
-                    <a href="aufnahmeantrag.pdf" class="btn-light" target="_blank"><i class="fas fa-file-pdf"></i> Aufnahmeantrag (PDF)</a>
-                </div>
-
-                <div id="rooms" class="info-card">
-                    <i class="fas fa-microphone-lines icon-main"></i>
-                    <h3>Proberaum</h3>
-                    <ul class="feature-list">
-                        <li>Komplette PA & Backline</li>
-                        <li>Einmieten via Kalender</li>
+                <div class="downloads" id="downloads">
+                    <h3>Vereinsdokumente</h3>
+                    <ul>
+                        <li><a href="satzung.html">Vereinssatzung</a></li>
+                        <li><a href="downloads/beitragssatzung.pdf">Beitragssatzung (PDF)</a></li>
+                        <li><a href="downloads/nutzungsvertrag.pdf">Nutzungsvertrag (PDF)</a></li>
+                        <li><a href="downloads/schluesselvereinbarung.pdf">Schlüsselvereinbarung (PDF)</a></li>
                     </ul>
-                    <a href="#contact" class="btn-outline">Anfragen</a>
-                </div>
-                <div id="werkstatt" class="info-card">
-                    <i class="fas fa-tools icon-main"></i>
-                    <h3>Werkstatt</h3>
-                    <ul class="feature-list">
-                        <li>Reparatur-Equipment</li>
-                        <li>Technik-Check vor Ort</li>
-                    </ul>
-                    <a href="#contact" class="btn-outline">Anfragen</a>
-                </div>
-
-                <div id="rental" class="info-card span-2">
-                    <h2 class="card-title">Gerätevermietung</h2>
-                    <div class="price-table">
-                        <div class="price-row">
-                            <span>Licht-Set (4er LED Bar inkl. Stativ)</span>
-                            <span class="price-tag">Ab 20€ / Tag</span>
-                        </div>
-                        <div class="price-row">
-                            <span>Fullrange Box (Aktiv, 12", 1000W)</span>
-                            <span class="price-tag">Ab 15€ / Tag</span>
-                        </div>
-                    </div>
-                    <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">* Weitere Geräte auf Anfrage verfügbar.</p>
-                </div>
-
-                <div id="events" class="info-card span-2 gray-bg">
-                    <h2 class="card-title">Events</h2>
-                    <div class="event-items">
-                        <div class="event-box"><strong>Musiker-Stammtisch</strong> Jeden 1. Freitag im Monat</div>
-                        <div class="event-box"><strong>Musik-Flohmarkt</strong> Jährliches Event in Planung</div>
-                        <div class="event-box"><strong>Arbeitseinsatz</strong> Termine werden intern bekannt gegeben</div>
-                    </div>
-                </div>
-
-                <div id="spende" class="info-card accent-card">
-                    <i class="fas fa-heart icon-white"></i>
-                    <h3>Spenden</h3>
-                    <p>Geld- oder Sachspenden sind steuerlich absetzbar (Quittung möglich).</p>
-                    <p class="iban-text"><strong>PayPal:</strong> [Euer PayPal-Link]</p>
-                    <a href="#" class="btn-light" style="background:#0070ba; border:none;"><i class="fab fa-paypal"></i> Via PayPal</a>
-                </div>
-
-                <div id="contact" class="info-card span-2">
-                    <h2 class="card-title">Kontakt</h2>
-                    <form class="main-form">
-                        <div class="form-group">
-                            <input type="text" placeholder="Dein Name" required>
-                            <input type="email" placeholder="Deine E-Mail" required>
-                        </div>
-                        <textarea placeholder="Deine Nachricht oder Buchungsanfrage..." rows="3"></textarea>
-                        <button type="submit" class="btn-main">Anfrage senden</button>
-                    </form>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section class="section shell contact-grid" id="contact" aria-labelledby="contact-title">
+            <div>
+                <p class="eyebrow">VAM 09 · Staßfurt</p>
+                <h2 id="contact-title">Schreib uns.</h2>
+                <address>Vereinsheim · Schlachthofstraße 10<br>39418 Staßfurt<br>
+                    <a class="text-link" href="mailto:info@vam09.de">info@vam09.de</a><br>
+                    <a class="text-link" href="tel:+4915786890347">+49 157 86890347</a>
+                </address>
+            </div>
+            <div id="spende">
+                <h3>Den Verein unterstützen</h3>
+                <p>Mitgliedsbeiträge und Projekte tragen unsere Arbeit. Geld- und Sachspenden helfen uns, unsere Angebote weiterzuentwickeln. Spenden an unseren gemeinnützigen Verein können steuerlich geltend gemacht werden. Fragen zu Spenden und Zuwendungsbestätigungen beantworten wir per E-Mail.</p>
+                <a class="text-link" href="mailto:info@vam09.de?subject=Spende">Spende besprechen</a>
+            </div>
+        </section>
     </main>
-
-    <footer class="main-footer">
-        <div class="container">
-            <p>&copy; 2026 VAM 09 e.V. Staßfurt | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a></p>
+    <dialog class="photo-dialog" id="raumfoto-dialog" aria-label="Raumfoto in voller Größe">
+        <div class="photo-dialog-header">
+            <form method="dialog">
+                <button class="button button-small button-line" type="submit">Schließen</button>
+            </form>
         </div>
+        <div class="photo-dialog-body"></div>
+    </dialog>
+    <footer class="site-footer">
+        <div class="shell footer-inner">
+            <a class="wordmark" href="#home" aria-label="VAM 09, zum Seitenanfang">VAM<span>09</span><span class="mark-dot">.</span></a>
+            <div class="footer-links">
+                <a href="admin.html">Buchungsverwaltung</a>
+                <a href="impressum.html">Impressum</a>
+                <a href="datenschutz.html">Datenschutz</a>
+                <a href="datenschutz.html#cookies">Cookie-Hinweise</a>
+            </div>
+        </div>
+        <p class="shell footer-cookie-note">Die Buchungsverwaltung verwendet ein notwendiges Anmelde-Cookie.</p>
     </footer>
-
-    <script src="script.js"></script>
 </body>
 </html>
