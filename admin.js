@@ -111,29 +111,29 @@ function displayBooking(booking) {
     const paymentStatus = booking.paid ? 'bezahlt' : 'unbezahlt';
     const pending = booking.approval_status === 'pending';
     const rejected = booking.approval_status === 'rejected';
-    const status = pending ? 'Anfrage offen' : rejected ? 'Anfrage abgelehnt' : booking.cancelled ? 'Storniert' : `Bestätigt · ${paymentStatus}`;
+    const status = pending ? (booking.contact_deleted ? 'Anfrage abgelaufen' : 'Anfrage offen')
+        : rejected ? 'Anfrage abgelehnt' : booking.cancelled ? 'Storniert' : `Bestätigt · ${paymentStatus}`;
     card.append(
         text('h3', `${hourLabel(booking.start_hour)}–${hourLabel(booking.start_hour + booking.hours)} · ${rooms[booking.room]}`),
         text('p', `${booking.reference} · ${status} · ${euro.format(booking.cents / 100)}`),
-        text('p', `${booking.name} · ${booking.email}`)
+        text('p', booking.contact_deleted ? 'Kontaktdaten nach Ablauf der Löschfrist entfernt.' : `${booking.name} · ${booking.email}`)
     );
     const actions = document.createElement('div');
     actions.className = 'admin-actions';
-    if (pending) {
+    if (pending && !booking.contact_deleted) {
         actions.append(
             bookingAction(booking, 'Zusage erteilen', 'approve'),
             bookingAction(booking, 'Anfrage ablehnen', 'reject', 'Anfrage ablehnen und die vorgemerkten Stunden freigeben?')
         );
-    } else if (!booking.cancelled) {
+    } else if (!pending && !booking.cancelled) {
         actions.append(
             booking.paid
                 ? bookingAction(booking, 'Zahlungsstatus zurücksetzen', 'unpaid', 'Hast du die Zahlung bereits erstattet oder möchtest du einen Erfassungsfehler korrigieren?')
-                : bookingAction(booking, 'Zahlung verbuchen', 'paid'),
-            bookingAction(booking, 'Stornieren', 'cancel', 'Termin stornieren und die Stunden wieder freigeben? Bitte informiere die buchende Person.')
+                : bookingAction(booking, 'Zahlung verbuchen', 'paid')
         );
+        if (!booking.contact_deleted) actions.append(bookingAction(booking, 'Stornieren', 'cancel', 'Termin stornieren und die Stunden wieder freigeben? Bitte informiere die buchende Person.'));
     }
-    if ((pending && !booking.request_email_sent) || (rejected && !booking.email_sent) ||
-        (booking.approval_status === 'approved' && !booking.cancelled && !booking.email_sent)) {
+    if (!booking.contact_deleted && (pending ? !booking.request_email_sent : (rejected || !booking.cancelled) && !booking.email_sent)) {
         actions.append(bookingAction(booking, 'E-Mail erneut versuchen', 'retry-mail'));
     }
     if (actions.childElementCount) card.append(actions);

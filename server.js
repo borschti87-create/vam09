@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
+import { createBookingReceipt } from './booking-receipt.js';
+import { deleteExpiredBookingContacts } from './booking-retention.js';
 
 const production = process.env.NODE_ENV === 'production';
 const adminUsername = (process.env.ADMIN_USERNAME || 'vam09-vorstand').trim().toLowerCase();
@@ -49,6 +51,7 @@ const schema = `
     ALTER TABLE bookings ADD COLUMN IF NOT EXISTS approval_status text NOT NULL DEFAULT 'direct'
         CHECK (approval_status IN ('direct', 'pending', 'approved', 'rejected'));
     ALTER TABLE bookings ADD COLUMN IF NOT EXISTS request_email_sent boolean NOT NULL DEFAULT false;
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS contact_deleted_at timestamptz;
     CREATE INDEX IF NOT EXISTS slots_day ON slots(day);
     CREATE TABLE IF NOT EXISTS booking_settings (
         id smallint PRIMARY KEY CHECK (id = 1),
@@ -57,6 +60,17 @@ const schema = `
     INSERT INTO booking_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 `;
 await (localDb ? localDb.exec(schema) : postgres.query(schema));
+
+async function enforceBookingRetention() {
+    try {
+        await deleteExpiredBookingContacts(db);
+    } catch (error) {
+        console.error('Löschen abgelaufener Buchungskontakte fehlgeschlagen:', error.code || error.name);
+    } finally {
+        setTimeout(enforceBookingRetention, 60 * 60 * 1000).unref();
+    }
+}
+await enforceBookingRetention();
 
 async function transaction(work) {
     if (localDb) return localDb.transaction(work);
@@ -270,7 +284,7 @@ app.get('/api/calendar', async (req, res) => {
     res.json({ days, cents: 500 + (hours - 1) * 300, paypalAvailable: paypalAvailable(settings), approvalRequired: settings.approvalRequired });
 });
 
-async function sendEmail(saved, to, subject, body, key) {
+async function sendEmail(saved, to, subject, body, key, attachments) {
     const settings = displaySettings(saved);
     if (!settings.emailEnabled || !settings.emailFrom || !settings.emailKeySet) return false;
     const token = saved.emailKey === undefined ? process.env.RESEND_API_KEY : saved.emailKey && unseal(saved.emailKey);
@@ -281,7 +295,7 @@ async function sendEmail(saved, to, subject, body, key) {
             'Content-Type': 'application/json',
             'Idempotency-Key': key
         },
-        body: JSON.stringify({ from: saved.emailFrom ?? process.env.BOOKING_FROM, to: [to], reply_to: kuhEmail, subject, text: body }),
+        body: JSON.stringify({ from: saved.emailFrom ?? process.env.BOOKING_FROM, to: [to], reply_to: kuhEmail, subject, text: body, attachments }),
         signal: AbortSignal.timeout(6500)
     });
     if (!response.ok) throw new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`);
@@ -290,19 +304,28 @@ async function sendEmail(saved, to, subject, body, key) {
 
 async function confirmByEmail(booking, saved) {
     if (booking.email_sent || booking.cancelled) return booking.email_sent;
-    const payment = paypalLink(displaySettings(saved), booking);
+    const settings = displaySettings(saved);
+    if (!booking.email || !settings.emailEnabled || !settings.emailFrom || !settings.emailKeySet) return false;
+    const payment = paypalLink(settings, booking);
+    const ref = reference(booking.id);
+    const room = rooms.get(booking.room);
+    const date = booking.day.split('-').reverse().join('.');
+    const time = `${booking.start_hour}:00–${booking.start_hour + booking.hours}:00 Uhr`;
+    const price = euro.format(booking.cents / 100);
     const text = [
         'Verein Aktiver Musiker 2009 e. V.',
-        `Deine KuH-Buchung ${reference(booking.id)} ist bestätigt.`,
-        `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`,
+        `Deine KuH-Buchung ${ref} ist bestätigt. Den Buchungsbeleg findest du im Anhang.`,
+        `${room} · ${date} · ${time} (Ortszeit)`,
         'Veranstaltungsort und Vereinsanschrift: Schlachthofstraße 10, 39418 Staßfurt',
-        `Gesamtpreis: ${euro.format(booking.cents / 100)}`,
-        ...(payment ? [`Sofortzahlung per PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${reference(booking.id)} im Zahlungsbetreff an.`] : []),
+        `Gesamtpreis: ${price}`,
+        ...(payment ? [`Sofortzahlung per PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${ref} im Zahlungsbetreff an.`] : []),
         'Zahlung vor Ort ist nach Absprache möglich.',
         `Bei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`
     ].join('\n');
     try {
-        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${reference(booking.id)}`, text, `kuh-booking/${booking.id}`);
+        const pdf = await createBookingReceipt({ reference: ref, room, date, time, price, contact: kuhEmail });
+        const attachments = [{ filename: `KuH-Buchungsbeleg-${ref}.pdf`, content: Buffer.from(pdf).toString('base64') }];
+        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${ref}`, text, `kuh-booking/${booking.id}`, attachments);
         if (!sent) return false;
         await db.query('UPDATE bookings SET email_sent=true WHERE id=$1', [booking.id]);
         return true;
@@ -479,14 +502,15 @@ app.get('/api/admin/schedule', async (req, res) => {
     const day = dateValue(req.query.day);
     const [hours, bookings] = await Promise.all([
         db.query('SELECT room, hour FROM slots WHERE day=$1 AND booking_id IS NULL ORDER BY room, hour', [day]),
-        db.query(`SELECT id, room, start_hour, hours, name, email, cents, cancelled, paid, email_sent, approval_status, request_email_sent
+        db.query(`SELECT id, room, start_hour, hours, name, email, cents, cancelled, paid, email_sent, approval_status, request_email_sent,
+                         contact_deleted_at IS NOT NULL AS contact_deleted
                   FROM bookings WHERE day=$1 ORDER BY start_hour, room`, [day])
     ]);
     res.json({ hours: hours.rows, bookings: bookings.rows.map(booking => ({ ...booking, reference: reference(booking.id) })) });
 });
 app.get('/api/admin/requests', async (req, res) => {
     const { rows } = await db.query(`SELECT id, room, day::text, start_hour, request_email_sent
-        FROM bookings WHERE approval_status='pending' ORDER BY day, start_hour LIMIT 100`);
+        FROM bookings WHERE approval_status='pending' AND contact_deleted_at IS NULL ORDER BY day, start_hour LIMIT 100`);
     res.json({ requests: rows.map(row => ({ ...row, reference: reference(row.id) })) });
 });
 app.post('/api/admin/slots', async (req, res) => {
@@ -533,8 +557,9 @@ app.post('/api/admin/bookings/:id', async (req, res) => {
         const { rows } = await client.query('SELECT *, day::text AS day FROM bookings WHERE id=$1 FOR UPDATE', [id]);
         if (!rows.length) fail(404, 'Buchung nicht gefunden.');
         const current = rows[0];
+        if (current.contact_deleted_at && !['paid', 'unpaid'].includes(action)) fail(409, 'Die Kontaktdaten zu diesem Termin wurden gelöscht.');
         if (action === 'retry-mail') {
-            if (current.approval_status === 'direct' || (current.cancelled && current.approval_status !== 'rejected')) fail(409, 'Für diese Buchung gibt es keine Anfrage-E-Mail.');
+            if (current.cancelled && current.approval_status !== 'rejected') fail(409, 'Für diese stornierte Buchung gibt es keine E-Mail zum Nachsenden.');
             return current;
         }
         if (action === 'approve' || action === 'reject') {

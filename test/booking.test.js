@@ -3,6 +3,8 @@ import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { test } from 'node:test';
+import { PGlite } from '@electric-sql/pglite';
+import { deleteExpiredBookingContacts } from '../booking-retention.js';
 
 const password = 'nur-fuer-den-lokalen-buchungstest-2026';
 const username = 'test-vorstand';
@@ -12,6 +14,29 @@ const month = tomorrow.slice(0, 7);
 const mailKey = 're_testProviderKey123';
 const mailFrom = 'booking@example.invalid';
 
+test('Löschfrist beginnt am Terminende und erhält die Zahlungsdaten', async () => {
+    const db = new PGlite();
+    try {
+        await db.exec(`
+            CREATE TABLE bookings (id integer, day date, start_hour integer, hours integer,
+                name text NOT NULL, email text NOT NULL, contact_deleted_at timestamptz, cents integer, paid boolean);
+            INSERT INTO bookings VALUES
+                (1, (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Berlin')::date - 35, 23, 1, 'Alt', 'alt@example.invalid', NULL, 500, true),
+                (2, (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Berlin')::date - 20, 23, 1, 'Neu', 'neu@example.invalid', NULL, 800, false),
+                (3, (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Berlin')::date + 45, 23, 1, 'Geplant', 'geplant@example.invalid', NULL, 500, false);
+        `);
+        await deleteExpiredBookingContacts(db);
+        const { rows } = await db.query('SELECT id, name, email, contact_deleted_at, cents, paid FROM bookings ORDER BY id');
+        assert.ok(rows[0].contact_deleted_at);
+        assert.deepEqual([rows[0].name, rows[0].email, rows[0].cents, rows[0].paid], ['', '', 500, true]);
+        assert.deepEqual(rows.slice(1).map(row => [row.email, row.contact_deleted_at]), [['neu@example.invalid', null], ['geplant@example.invalid', null]]);
+        await deleteExpiredBookingContacts(db);
+        assert.deepEqual((await db.query('SELECT contact_deleted_at FROM bookings WHERE id=1')).rows[0].contact_deleted_at, rows[0].contact_deleted_at);
+    } finally {
+        await db.close();
+    }
+});
+
 test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t => {
     const mockEmailProvider = `
         const original = globalThis.fetch;
@@ -20,8 +45,14 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
             const data = JSON.parse(options.body);
             if (data.subject.startsWith('Neue KuH-') && (data.to[0] !== 'board@example.invalid' || !data.text.includes('/admin.html?tag=') ||
                 !data.text.includes('&anfrage=') || data.text.includes('booking@example.invalid'))) return new Response(null, { status: 400 });
-            if (data.subject.startsWith('Deine KuH-Buchung') && (!data.text.includes('https://www.paypal.com/paypalme/TestVerein/') ||
-                !data.text.includes('Zahlung vor Ort ist nach Absprache möglich.'))) return new Response(null, { status: 400 });
+            if (data.subject.startsWith('Deine KuH-Buchung')) {
+                const [attachment] = data.attachments ?? [];
+                const reference = data.subject.split(' ').at(-1);
+                if (!data.text.includes('https://www.paypal.com/paypalme/TestVerein/') ||
+                    !data.text.includes('Zahlung vor Ort ist nach Absprache möglich.') ||
+                    data.attachments?.length !== 1 || attachment.filename !== 'KuH-Buchungsbeleg-' + reference + '.pdf' ||
+                    !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
+            } else if (data.attachments) return new Response(null, { status: 400 });
             const valid = options.headers.Authorization === 'Bearer ${mailKey}' &&
                 options.headers['Idempotency-Key'].startsWith('kuh-') && data.from === '${mailFrom}' &&
                 data.to[0].endsWith('@example.invalid') && data.reply_to === 'kuh_stassfurt@mail.de';
