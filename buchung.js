@@ -14,9 +14,7 @@ const times = document.querySelector('#termin-zeiten');
 const summaryRoom = document.querySelector('#buchung-raum');
 const summaryDate = document.querySelector('#buchung-datum');
 const summaryTime = document.querySelector('#buchung-zeitraum');
-const paymentNotice = document.querySelector('#buchung-zahlung');
-const paymentDescription = document.createTextNode('');
-paymentNotice.prepend(paymentDescription);
+const paymentDescription = document.querySelector('#buchung-zahlung');
 const currency = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' });
 const monthLabel = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const fullDate = new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeZone: 'UTC' });
@@ -131,9 +129,9 @@ async function loadCalendar() {
         submit.textContent = approvalRequired ? 'Buchung anfragen' : 'Zahlungspflichtig buchen';
         document.querySelector('#buchung-hinweis').textContent = approvalRequired
             ? 'Der Verein prüft deine Anfrage. Erst mit seiner Zusage per E-Mail ist die Buchung verbindlich.'
-            : 'Du kannst die Angaben vor dem Absenden ändern. Die Buchung reserviert den Raum verbindlich.';
+            : 'Mit dem Klick auf „Zahlungspflichtig buchen“ buchst du den Termin verbindlich. Bei Stornierungsfragen wende dich an das KuH-Team.';
         paymentDescription.textContent = result.paypalAvailable
-            ? (approvalRequired ? 'Zahlung per PayPal nach der Zusage möglich. ' : 'Zahlung per PayPal nach der Buchung möglich. ') : '';
+            ? (approvalRequired ? 'Du kannst direkt nach der Zusage per PayPal bezahlen.' : 'Du kannst direkt nach der Buchung per PayPal bezahlen.') : '';
         calendarStatus.textContent = Object.keys(availability).length ? '' : 'In diesem Monat sind für diese Dauer keine Termine frei.';
         renderCalendar();
     } catch (error) {
@@ -208,7 +206,8 @@ form.addEventListener('submit', async event => {
                 `Raum: ${result.room}`,
                 `Termin: ${formattedDate}, ${timeRange} (Ortszeit)`,
                 `Gesamtpreis: ${total}`,
-                `Zahlung: ${result.paypal || 'Bitte Zahlungsdetails beim Verein erfragen.'}`,
+                ...(result.paypal ? [`Sofortzahlung per PayPal: ${result.paypal}`] : []),
+                'Zahlung vor Ort ist nach Absprache möglich.',
                 'Kontakt: kuh_stassfurt@mail.de · +49 157 86890347'
             ].join('\n')
         };

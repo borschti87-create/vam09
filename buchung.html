@@ -23,7 +23,8 @@
     <main class="section shell subpage booking-page" id="inhalt">
         <h1>Raum im KuH buchen.</h1>
         <p>Die erste Stunde kostet 5 €, jede weitere 3 €. Wähle Raum, Datum und Dauer, um die freien Startzeiten zu sehen.</p>
-        <p id="buchung-zahlung" class="booking-payment">Fragen zur Zahlung beantwortet das KuH-Team unter <a href="mailto:kuh_stassfurt@mail.de">kuh_stassfurt@mail.de</a>.</p>
+        <p>Für Vereinsmitglieder sind Proberaum und DIY-Werkstatt kostenlos. Wenn du Mitglied bist, melde dich vor einer Online-Buchung beim <a href="mailto:kuh_stassfurt@mail.de?subject=KuH-Termin%20f%C3%BCr%20Vereinsmitglieder">KuH-Team</a>.</p>
+        <p class="booking-payment"><span id="buchung-zahlung"></span> Die Bezahlung vor Ort ist nach <a href="mailto:kuh_stassfurt@mail.de?subject=KuH-Zahlung%20vor%20Ort">Absprache mit dem KuH-Team</a> möglich.</p>
         <noscript><p class="note">Für Live-Verfügbarkeit und Buchungen ist JavaScript erforderlich.</p></noscript>
         <form id="buchungsformular" class="booking-form" autocomplete="on">
             <fieldset class="booking-controls">
@@ -62,7 +63,7 @@
                         <div><dt>Zeitraum</dt><dd id="buchung-zeitraum">Noch nicht gewählt</dd></div>
                         <div class="booking-price"><dt>Gesamtpreis</dt><dd><output id="buchung-preis">5,00 €</output></dd></div>
                     </dl>
-                    <p><span id="buchung-hinweis">Du kannst die Angaben vor dem Absenden ändern. Die Buchung reserviert den Raum verbindlich.</span> <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
+                    <p><span id="buchung-hinweis">Mit dem Klick auf „Zahlungspflichtig buchen“ buchst du den Termin verbindlich. Bei Stornierungsfragen wende dich an das KuH-Team.</span> <a href="datenschutz.html">Hinweise zum Datenschutz</a></p>
                     <button name="buchen" type="submit" class="button button-dark" disabled>Zahlungspflichtig buchen</button>
                     <p id="buchung-status" class="feedback" role="alert"></p>
                 </section>

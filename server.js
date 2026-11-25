@@ -290,13 +290,14 @@ async function sendEmail(saved, to, subject, body, key) {
 
 async function confirmByEmail(booking, saved) {
     if (booking.email_sent || booking.cancelled) return booking.email_sent;
-    const payment = booking.approval_status === 'approved' ? paypalLink(displaySettings(saved), booking) : null;
+    const payment = paypalLink(displaySettings(saved), booking);
     const text = [
         'Verein Aktiver Musiker 2009 e. V.',
         `Deine KuH-Buchung ${reference(booking.id)} ist bestätigt.`,
         `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`,
         `Gesamtpreis: ${euro.format(booking.cents / 100)}`,
-        ...(payment ? [`PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${reference(booking.id)} im Zahlungsbetreff an.`] : []),
+        ...(payment ? [`Sofortzahlung per PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${reference(booking.id)} im Zahlungsbetreff an.`] : []),
+        'Zahlung vor Ort ist nach Absprache möglich.',
         `Bei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`
     ].join('\n');
     try {

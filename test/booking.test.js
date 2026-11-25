@@ -20,6 +20,8 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
             const data = JSON.parse(options.body);
             if (data.subject.startsWith('Neue KuH-') && (data.to[0] !== 'board@example.invalid' || !data.text.includes('/admin.html?tag=') ||
                 !data.text.includes('&anfrage=') || data.text.includes('booking@example.invalid'))) return new Response(null, { status: 400 });
+            if (data.subject.startsWith('Deine KuH-Buchung') && (!data.text.includes('https://www.paypal.com/paypalme/TestVerein/') ||
+                !data.text.includes('Zahlung vor Ort ist nach Absprache möglich.'))) return new Response(null, { status: 400 });
             const valid = options.headers.Authorization === 'Bearer ${mailKey}' &&
                 options.headers['Idempotency-Key'].startsWith('kuh-') && data.from === '${mailFrom}' &&
                 data.to[0].endsWith('@example.invalid') && data.reply_to === 'kuh_stassfurt@mail.de';
