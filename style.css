@@ -262,6 +262,7 @@ address { font-style: normal; }
 .calendar-legend span { display: inline-block; background: var(--salmon-light); width: .8rem; height: .8rem; border-radius: .2rem; vertical-align: -.02rem; }
 .booking-summary .booking-fields { grid-template-columns: 1fr; }
 
+#admin-zusage { margin-bottom: 1.25rem; }
 .admin-tools { display: flex; gap: .65rem 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.4rem; }
 .admin-tools a { font-weight: 650; }
 .admin-tools button { margin-inline-start: auto; }

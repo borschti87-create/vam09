@@ -306,17 +306,21 @@ async function sendEmail(saved, to, subject, body, key, { attachments, html, san
     return true;
 }
 
+function bookingDetails(booking) {
+    const hour = value => `${String(value).padStart(2, '0')}:00`;
+    return {
+        reference: reference(booking.id), room: rooms.get(booking.room), date: booking.day.split('-').reverse().join('.'),
+        time: `${hour(booking.start_hour)}–${hour(booking.start_hour + booking.hours)} Uhr`,
+        price: euro.format(booking.cents / 100), contact: kuhEmail
+    };
+}
+
 async function confirmByEmail(booking, saved) {
     if (booking.email_sent || booking.cancelled) return booking.email_sent;
     const settings = displaySettings(saved);
     if (!booking.email || !settings.emailEnabled || !settings.emailFrom || !settings.emailKeySet) return false;
-    const payment = paypalLink(settings, booking);
-    const ref = reference(booking.id);
-    const room = rooms.get(booking.room);
-    const date = booking.day.split('-').reverse().join('.');
-    const time = `${String(booking.start_hour).padStart(2, '0')}:00–${String(booking.start_hour + booking.hours).padStart(2, '0')}:00 Uhr`;
-    const price = euro.format(booking.cents / 100);
-    const details = { reference: ref, room, date, time, price, payment, contact: kuhEmail };
+    const details = { ...bookingDetails(booking), payment: paypalLink(settings, booking) };
+    const ref = details.reference;
     try {
         const { text, html } = createBookingEmail(details);
         const pdf = await createBookingReceipt(details);
@@ -339,17 +343,22 @@ async function notifyApproval(booking, saved) {
     if (!address) return false;
     const ref = reference(booking.id);
     const subject = pending ? `Neue KuH-Buchungsanfrage ${ref}` : `Deine KuH-Anfrage ${ref} wurde abgelehnt`;
-    const period = `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`;
+    const details = bookingDetails(booking);
     try {
-        let body = `${subject}.\n${period}\nBei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`;
+        let text = `${subject}.\n${details.room} · ${details.date} · ${details.time} (Ortszeit)\nBei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`;
+        let options;
         if (pending) {
             const link = new URL('/admin.html', site || `http://localhost:${port}`);
             link.searchParams.set('tag', booking.day);
             link.searchParams.set('anfrage', booking.id);
-            body = `${subject}\n${period}\nAnfrage in der Buchungsverwaltung prüfen: ${link.href}`;
+            link.searchParams.set('aktion', 'zusage');
+            const email = createBookingEmail({ ...details, approvalLink: link.href });
+            const pdf = await createBookingReceipt({ ...details, pending: true });
+            text = email.text;
+            options = { html: email.html, attachments: [{ filename: `KuH-Anfragebeleg-${ref}.pdf`, content: Buffer.from(pdf).toString('base64') }] };
         }
         const addressHash = createHash('sha256').update(address).digest('hex').slice(0, 16);
-        const sent = await sendEmail(saved, address, subject, body, `kuh-${booking.approval_status}/${booking.id}/${addressHash}`);
+        const sent = await sendEmail(saved, address, subject, text, `kuh-${booking.approval_status}/${booking.id}/${addressHash}`, options);
         if (sent) {
             await db.query(pending ? 'UPDATE bookings SET request_email_sent=true WHERE id=$1'
                 : 'UPDATE bookings SET email_sent=true WHERE id=$1', [booking.id]);

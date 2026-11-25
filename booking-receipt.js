@@ -3,9 +3,10 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 const logoBytes = await readFile(new URL('./assets/kuh-logo-beleg.png', import.meta.url));
 
-export async function createBookingReceipt({ reference, room, date, time, price, contact, test = false }) {
+export async function createBookingReceipt({ reference, room, date, time, price, contact, test = false, pending = false }) {
     const document = await PDFDocument.create({ updateMetadata: false });
-    document.setTitle(`KuH-Buchungsbeleg ${reference}`);
+    const title = pending ? 'Anfragebeleg' : 'Buchungsbeleg';
+    document.setTitle(`KuH-${title} ${reference}`);
     document.setProducer('Verein Aktiver Musiker 2009 e. V.');
     const regular = await document.embedFont(StandardFonts.Helvetica);
     const bold = await document.embedFont(StandardFonts.HelveticaBold);
@@ -25,8 +26,8 @@ export async function createBookingReceipt({ reference, room, date, time, price,
     page.drawRectangle({ x: logoX, y: 719, width: 104, height: 80, color: rgb(1, 1, 1) });
     page.drawImage(logo, { x: logoX + (104 - logoSize.width) / 2, y: 719 + (80 - logoSize.height) / 2, ...logoSize });
     text('Kultur- und Innovationshof', margin, 785, 13, bold);
-    text('Buchungsbeleg', margin, 731, 34, bold);
-    text(test ? 'MUSTERBELEG · Keine Buchung' : 'Dein Termin ist bestätigt.', margin, 701);
+    text(title, margin, 731, 34, bold);
+    text(pending ? 'Vorgemerkt · Zusage ausstehend' : test ? 'MUSTERBELEG · Keine Buchung' : 'Dein Termin ist bestätigt.', margin, 701);
 
     const fields = [
         ['Buchungsnummer', reference],
@@ -41,7 +42,9 @@ export async function createBookingReceipt({ reference, room, date, time, price,
         text(value, 225, y);
     });
 
-    if (test) {
+    if (pending) {
+        text('Der Beleg dokumentiert die Anfrage. Der Verein muss den Termin noch zusagen.', margin, 386, 11);
+    } else if (test) {
         text('Dieser Musterbeleg dient nur dem Test des E-Mail-Versands.', margin, 386, 11);
     } else {
         text('Dieser Beleg bestätigt deine Buchung. Eine Zahlung wird damit nicht quittiert.', margin, 386, 11);

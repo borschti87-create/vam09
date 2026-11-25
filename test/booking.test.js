@@ -44,9 +44,15 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
         globalThis.fetch = async (url, options) => {
             if (url !== 'https://api.resend.com/emails') return original(url, options);
             const data = JSON.parse(options.body);
-            if (data.subject.startsWith('Neue KuH-') && (data.to[0] !== 'board@example.invalid' || !data.text.includes('/admin.html?tag=') ||
-                !data.text.includes('&anfrage=') || data.text.includes('booking@example.invalid'))) return new Response(null, { status: 400 });
-            if (data.subject.startsWith('Deine KuH-Buchung')) {
+            if (data.subject.startsWith('Neue KuH-')) {
+                const [attachment] = data.attachments ?? [];
+                const reference = data.subject.split(' ').at(-1);
+                if (data.to[0] !== 'board@example.invalid' || !data.text.includes('/admin.html?tag=') ||
+                    !data.text.includes('&anfrage=') || !data.text.includes('&aktion=zusage') || data.text.includes('booking@example.invalid') ||
+                    !data.html?.includes('Buchung zusagen') || !data.html.includes('&amp;aktion=zusage') ||
+                    data.attachments?.length !== 1 || attachment.filename !== 'KuH-Anfragebeleg-' + reference + '.pdf' ||
+                    !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
+            } else if (data.subject.startsWith('Deine KuH-Buchung')) {
                 const [attachment] = data.attachments ?? [];
                 const reference = data.subject.split(' ').at(-1);
                 if (!data.html?.includes('Deine Buchungsdaten') || !data.html.includes('Mit PayPal bezahlen') ||

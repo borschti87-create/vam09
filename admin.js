@@ -5,6 +5,8 @@ const message = document.querySelector('#admin-status');
 const bookings = document.querySelector('#admin-bookings');
 const requests = document.querySelector('#admin-requests');
 const deepLink = new URLSearchParams(location.search);
+const linkedApproval = document.querySelector('#admin-zusage');
+const linkedApprovalContent = document.querySelector('#admin-zusage-inhalt');
 const monthInput = document.querySelector('#admin-month');
 const previousMonth = document.querySelector('#admin-month-prev');
 const nextMonth = document.querySelector('#admin-month-next');
@@ -57,6 +59,8 @@ function showLogin() {
     monthTotals.replaceChildren();
     settingsStatus.textContent = '';
     testStatus.textContent = '';
+    linkedApproval.hidden = true;
+    linkedApprovalContent.replaceChildren();
     login.hidden = false;
     panel.hidden = true;
     schedule.reset();
@@ -149,6 +153,25 @@ function displayBooking(booking) {
     return card;
 }
 
+function renderLinkedApproval(day, dayBookings) {
+    linkedApproval.hidden = deepLink.get('aktion') !== 'zusage' || deepLink.get('tag') !== day;
+    if (linkedApproval.hidden) return;
+    const booking = dayBookings.find(entry => entry.id === deepLink.get('anfrage'));
+    if (!booking) {
+        linkedApprovalContent.replaceChildren(text('p', 'Diese Buchungsanfrage konnte nicht gefunden werden.'));
+        return;
+    }
+    const summary = text('p', `${booking.reference} · ${rooms[booking.room]} · ${dateLabel.format(new Date(day))} · ${hourLabel(booking.start_hour)}–${hourLabel(booking.start_hour + booking.hours)} Uhr · ${euro.format(booking.cents / 100)}`);
+    if (booking.approval_status !== 'pending' || booking.contact_deleted) {
+        const status = booking.approval_status === 'approved' && !booking.cancelled ? 'Die Buchung wurde bereits bestätigt.' : 'Diese Anfrage ist nicht mehr offen.';
+        linkedApprovalContent.replaceChildren(summary, text('p', status));
+        return;
+    }
+    const button = bookingAction(booking, 'Buchung verbindlich zusagen', 'approve');
+    button.classList.replace('button-line', 'button-dark');
+    linkedApprovalContent.replaceChildren(summary, text('p', 'Mit deiner Zusage wird der Termin bestätigt und die buchende Person erhält eine E-Mail.'), button);
+}
+
 async function loadRequests() {
     try {
         const result = await api('/api/admin/requests');
@@ -185,6 +208,7 @@ async function load() {
             : 'Im gewählten Raum sind keine freien Stunden hinterlegt.';
         document.querySelector('#admin-bookings-title').textContent = `Buchungen am ${dateLabel.format(new Date(day))}`;
         bookings.replaceChildren(...(result.bookings.length ? result.bookings.map(displayBooking) : [text('p', 'Für diesen Tag gibt es keine Buchungen.')]));
+        renderLinkedApproval(day, result.bookings);
     } catch (error) {
         if (!request.signal.aborted) showError(error);
     }
@@ -199,7 +223,8 @@ async function showPanel() {
     monthInput.value = schedule.elements.day.value.slice(0, 7);
     updateRange();
     await Promise.all([load(), loadMonth(), loadSettings(), loadRequests()]);
-    document.getElementById(`buchung-${deepLink.get('anfrage')}`)?.focus();
+    if (!linkedApproval.hidden) document.querySelector('#admin-zusage-titel').focus();
+    else document.getElementById(`buchung-${deepLink.get('anfrage')}`)?.focus();
 }
 
 function updateRange() {
