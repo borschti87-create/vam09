@@ -205,6 +205,7 @@ form.addEventListener('submit', async event => {
                 `Buchungsnummer: ${result.reference}`,
                 `Raum: ${result.room}`,
                 `Termin: ${formattedDate}, ${timeRange} (Ortszeit)`,
+                'Veranstaltungsort und Vereinsanschrift: Schlachthofstraße 10, 39418 Staßfurt',
                 `Gesamtpreis: ${total}`,
                 ...(result.paypal ? [`Sofortzahlung per PayPal: ${result.paypal}`] : []),
                 'Zahlung vor Ort ist nach Absprache möglich.',

@@ -295,6 +295,7 @@ async function confirmByEmail(booking, saved) {
         'Verein Aktiver Musiker 2009 e. V.',
         `Deine KuH-Buchung ${reference(booking.id)} ist bestätigt.`,
         `${rooms.get(booking.room)} · ${booking.day.split('-').reverse().join('.')} · ${booking.start_hour}:00 bis ${booking.start_hour + booking.hours}:00 Uhr (Ortszeit)`,
+        'Veranstaltungsort und Vereinsanschrift: Schlachthofstraße 10, 39418 Staßfurt',
         `Gesamtpreis: ${euro.format(booking.cents / 100)}`,
         ...(payment ? [`Sofortzahlung per PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${reference(booking.id)} im Zahlungsbetreff an.`] : []),
         'Zahlung vor Ort ist nach Absprache möglich.',
