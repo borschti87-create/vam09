@@ -178,12 +178,22 @@ address { font-style: normal; }
 .admin-actions button { font-family: inherit; font-size: 1rem; cursor: pointer; }
 .admin-booking { overflow-wrap: anywhere; }
 
-.booking-page {
+.kuh-booking {
+    --paper: #fff5d9;
+    --white: #fffdf5;
+    --rule: #d3bb86;
     --salmon-light: var(--kuh-yellow-soft);
     --rust: var(--kuh-ink);
-    max-width: 69rem;
+    background: var(--paper);
 }
-.booking-page .booking-summary .button-dark { background: var(--kuh-yellow); color: var(--ink); }
+.kuh-booking .site-header { background: var(--kuh-yellow); }
+.kuh-booking .header-inner { gap: .65rem 1.25rem; }
+.kuh-booking .kuh-brand { padding-inline-start: 0; border: 0; }
+.kuh-booking .kuh-brand img { mix-blend-mode: multiply; }
+.kuh-booking .booking-controls { background: var(--kuh-yellow-soft); border-color: var(--kuh-ink); }
+.kuh-booking .booking-controls legend { border-radius: .3rem; background: var(--kuh-yellow-soft); }
+.kuh-booking .booking-summary .button-dark { background: var(--kuh-yellow); color: var(--ink); }
+.booking-page { max-width: 69rem; }
 .booking-page > .booking-form { background: transparent; padding: 0; }
 .booking-controls, .settings-panel fieldset {
     margin: 0;
