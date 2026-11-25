@@ -111,6 +111,7 @@
                         <legend>Bestätigungs-E-Mail</legend>
                         <label class="toggle-label"><input name="emailEnabled" type="checkbox"> Buchungsbestätigungen per E-Mail senden</label>
                         <label>Verifizierte Absenderadresse <input type="email" name="emailFrom" maxlength="254" placeholder="buchung@vereinsdomain.de"></label>
+                        <p>Für Buchungs- und Zahlungsbestätigungen muss die Domain dieser Adresse bei Resend verifiziert sein. Teste den regulären Absender mit ausgeschaltetem Resend-Testabsender.</p>
                         <label>Resend-API-Schlüssel <input type="password" name="emailKey" autocomplete="new-password" maxlength="203" placeholder="re_…"></label>
                         <p id="admin-key-status">Bei leerem Feld bleibt der bisherige Schlüssel erhalten.</p>
                         <label class="toggle-label"><input name="removeEmailKey" type="checkbox"> Gespeicherten Schlüssel entfernen</label>

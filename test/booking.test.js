@@ -40,6 +40,7 @@ test('Löschfrist beginnt am Terminende und erhält die Zahlungsdaten', async ()
 test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t => {
     const mockEmailProvider = `
         const original = globalThis.fetch;
+        let paymentEmailKey;
         globalThis.fetch = async (url, options) => {
             if (url !== 'https://api.resend.com/emails') return original(url, options);
             const data = JSON.parse(options.body);
@@ -57,6 +58,16 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
                 if (attachment?.filename !== 'KuH-Buchungsbeleg-MUSTER.pdf' ||
                     !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
             } else if (data.attachments) return new Response(null, { status: 400 });
+            if (data.subject.startsWith('KuH: Zahlung bestätigt')) {
+                const key = options.headers['Idempotency-Key'];
+                if (!key.startsWith('kuh-payment/') || !data.text.includes('8,00') ||
+                    data.to[0] !== 'booking@example.invalid' || data.text.includes('paypal.com')) return new Response(null, { status: 400 });
+                if (!paymentEmailKey) {
+                    paymentEmailKey = key;
+                    return new Response(null, { status: 503 });
+                }
+                if (key !== paymentEmailKey) return new Response(null, { status: 400 });
+            }
             const sandbox = data.from === 'KuH-Mailtest <onboarding@resend.dev>';
             const valid = options.headers.Authorization === 'Bearer ${mailKey}' &&
                 options.headers['Idempotency-Key'].startsWith('kuh-') && data.reply_to === 'kuh_stassfurt@mail.de' &&
@@ -168,7 +179,13 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal(list.body.bookings.length, 1);
     assert.equal(list.body.bookings[0].email, base.email);
     const action = `/api/admin/bookings/${successful.id}`;
-    assert.equal((await api(action, 'POST', { action: 'paid' }, true)).status, 200);
+    assert.equal((await api(action, 'POST', { action: 'retry-payment-mail' }, true)).status, 409);
+    assert.deepEqual((await api(action, 'POST', { action: 'paid' }, true)).body, { ok: true, emailSent: false });
+    const paidBooking = (await api(`/api/admin/schedule?day=${tomorrow}`, 'GET', undefined, true)).body.bookings[0];
+    assert.equal(paidBooking.paid, true);
+    assert.equal(paidBooking.payment_email_sent, false);
+    assert.deepEqual((await api(action, 'POST', { action: 'retry-payment-mail' }, true)).body, { ok: true, emailSent: true });
+    assert.equal((await api(`/api/admin/schedule?day=${tomorrow}`, 'GET', undefined, true)).body.bookings[0].payment_email_sent, true);
     assert.equal((await api(action, 'POST', { action: 'cancel' }, true)).status, 409);
     assert.equal((await api(action, 'POST', { action: 'unpaid' }, true)).status, 200);
     assert.equal((await api(action, 'POST', { action: 'cancel' }, true)).status, 200);

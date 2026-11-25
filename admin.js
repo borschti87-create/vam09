@@ -87,7 +87,13 @@ function bookingAction(booking, label, action, confirmText) {
         button.disabled = true;
         try {
             const result = await api(`/api/admin/bookings/${booking.id}`, { action });
-            if (action === 'retry-mail') {
+            if (action === 'retry-payment-mail') {
+                message.textContent = result.emailSent ? 'Zahlungsbestätigung verschickt.' : 'Zahlungsbestätigung konnte nicht verschickt werden. Prüfe den regulären Mailversand.';
+            } else if (action === 'paid') {
+                message.textContent = result.emailSent === false
+                    ? 'Zahlung verbucht. Die Bestätigung konnte nicht per E-Mail verschickt werden.'
+                    : result.emailSent ? 'Zahlung verbucht und per E-Mail bestätigt.' : 'Zahlung verbucht.';
+            } else if (action === 'retry-mail') {
                 message.textContent = result.emailSent ? 'E-Mail verschickt.' : 'E-Mail konnte nicht verschickt werden.';
             } else {
                 message.textContent = result.emailSent === false
@@ -132,6 +138,9 @@ function displayBooking(booking) {
                 : bookingAction(booking, 'Zahlung verbuchen', 'paid')
         );
         if (!booking.contact_deleted) actions.append(bookingAction(booking, 'Stornieren', 'cancel', 'Termin stornieren und die Stunden wieder freigeben? Bitte informiere die buchende Person.'));
+        if (booking.paid && !booking.payment_email_sent && !booking.contact_deleted) {
+            actions.append(bookingAction(booking, 'Zahlungsbestätigung senden', 'retry-payment-mail'));
+        }
     }
     if (!booking.contact_deleted && (pending ? !booking.request_email_sent : (rejected || !booking.cancelled) && !booking.email_sent)) {
         actions.append(bookingAction(booking, 'E-Mail erneut versuchen', 'retry-mail'));

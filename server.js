@@ -1,5 +1,5 @@
 import express from 'express';
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
@@ -52,6 +52,8 @@ const schema = `
         CHECK (approval_status IN ('direct', 'pending', 'approved', 'rejected'));
     ALTER TABLE bookings ADD COLUMN IF NOT EXISTS request_email_sent boolean NOT NULL DEFAULT false;
     ALTER TABLE bookings ADD COLUMN IF NOT EXISTS contact_deleted_at timestamptz;
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_email_id uuid;
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_email_sent boolean NOT NULL DEFAULT false;
     CREATE INDEX IF NOT EXISTS slots_day ON slots(day);
     CREATE TABLE IF NOT EXISTS booking_settings (
         id smallint PRIMARY KEY CHECK (id = 1),
@@ -299,7 +301,7 @@ async function sendEmail(saved, to, subject, body, key, { attachments, sandbox =
         body: JSON.stringify({ from, to: [to], reply_to: kuhEmail, subject, text: body, attachments }),
         signal: AbortSignal.timeout(6500)
     });
-    if (!response.ok) throw new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`);
+    if (!response.ok) throw Object.assign(new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`), { status: response.status });
     return true;
 }
 
@@ -362,6 +364,30 @@ async function notifyApproval(booking, saved) {
         return sent;
     } catch (error) {
         console.error('Anfrage-E-Mail fehlgeschlagen:', error.message);
+        return false;
+    }
+}
+
+async function confirmPaymentByEmail(booking, saved) {
+    if (booking.payment_email_sent) return true;
+    const ref = reference(booking.id);
+    const date = booking.day.split('-').reverse().join('.');
+    const body = [
+        `Der Verein hat den Zahlungseingang für deine KuH-Buchung ${ref} bestätigt.`,
+        `${rooms.get(booking.room)} am ${date} ab ${booking.start_hour}:00 Uhr (Ortszeit)`,
+        `Betrag: ${euro.format(booking.cents / 100)}`,
+        `Kontakt für Rückfragen: ${kuhEmail}`
+    ].join('\n');
+    try {
+        const sent = await sendEmail(saved, booking.email, `KuH: Zahlung bestätigt · ${ref}`, body,
+            `kuh-payment/${booking.payment_email_id}`);
+        if (sent) {
+            await db.query('UPDATE bookings SET payment_email_sent=true WHERE id=$1 AND payment_email_id=$2 AND paid',
+                [booking.id, booking.payment_email_id]);
+        }
+        return sent;
+    } catch (error) {
+        console.error('Zahlungsbestätigung per E-Mail fehlgeschlagen:', error.message);
         return false;
     }
 }
@@ -489,7 +515,10 @@ app.post('/api/admin/test-email', async (req, res) => {
             'Im Anhang findest du einen Musterbeleg für den KuH-Kalender. Es wurde kein Termin gebucht.',
             `kuh-test/${randomBytes(16).toString('hex')}`, { sandbox, attachments });
         if (!sent) fail(502, 'Der E-Mail-Versand ist nicht vollständig eingerichtet.');
-    } catch {
+    } catch (error) {
+        if (!sandbox && error.status === 403) {
+            fail(502, 'Resend hat den Versand abgelehnt. Prüfe, ob die Absenderdomain verifiziert und für diesen API-Schlüssel freigegeben ist.');
+        }
         return res.status(502).json({ error: sandbox
             ? 'Die Test-E-Mail konnte nicht gesendet werden. Prüfe den Resend-Schlüssel und verwende die Anmeldeadresse des Resend-Kontos.'
             : 'Die Test-E-Mail konnte nicht gesendet werden. Bitte prüfe Absender und Resend-Schlüssel.' });
@@ -513,7 +542,7 @@ app.get('/api/admin/schedule', async (req, res) => {
     const [hours, bookings] = await Promise.all([
         db.query('SELECT room, hour FROM slots WHERE day=$1 AND booking_id IS NULL ORDER BY room, hour', [day]),
         db.query(`SELECT id, room, start_hour, hours, name, email, cents, cancelled, paid, email_sent, approval_status, request_email_sent,
-                         contact_deleted_at IS NOT NULL AS contact_deleted
+                         contact_deleted_at IS NOT NULL AS contact_deleted, payment_email_sent
                   FROM bookings WHERE day=$1 ORDER BY start_hour, room`, [day])
     ]);
     res.json({ hours: hours.rows, bookings: bookings.rows.map(booking => ({ ...booking, reference: reference(booking.id) })) });
@@ -562,7 +591,7 @@ app.post('/api/admin/slots', async (req, res) => {
 app.post('/api/admin/bookings/:id', async (req, res) => {
     const { id } = req.params;
     const action = req.body?.action;
-    if (!uuid.test(id) || !['cancel', 'paid', 'unpaid', 'approve', 'reject', 'retry-mail'].includes(action)) fail(400, 'Ungültige Buchungsaktion.');
+    if (!uuid.test(id) || !['cancel', 'paid', 'unpaid', 'approve', 'reject', 'retry-mail', 'retry-payment-mail'].includes(action)) fail(400, 'Ungültige Buchungsaktion.');
     const booking = await transaction(async client => {
         const { rows } = await client.query('SELECT *, day::text AS day FROM bookings WHERE id=$1 FOR UPDATE', [id]);
         if (!rows.length) fail(404, 'Buchung nicht gefunden.');
@@ -582,14 +611,26 @@ app.post('/api/admin/bookings/:id', async (req, res) => {
             return { ...current, approval_status: state, cancelled: state === 'rejected' };
         }
         if (current.cancelled || current.approval_status === 'pending') fail(409, 'Diese Buchung ist nicht aktiv.');
+        if (action === 'paid' || action === 'retry-payment-mail') {
+            if (action === 'retry-payment-mail' && !current.paid) fail(409, 'Für diese Buchung wurde noch keine Zahlung verbucht.');
+            const emailId = current.payment_email_id ?? randomUUID();
+            if (!current.paid || !current.payment_email_id) {
+                await client.query('UPDATE bookings SET paid=true, payment_email_id=$2 WHERE id=$1', [id, emailId]);
+            }
+            if (current.contact_deleted_at) return;
+            return { ...current, payment_email_id: emailId };
+        }
         if (action === 'cancel') {
             if (rows[0].paid) fail(409, 'Bitte zuerst die Zahlung erstatten und den Zahlungsstatus zurücksetzen.');
             await client.query('UPDATE bookings SET cancelled=true WHERE id=$1', [id]);
             await client.query('UPDATE slots SET booking_id=NULL WHERE booking_id=$1', [id]);
         } else {
-            await client.query('UPDATE bookings SET paid=$2 WHERE id=$1', [id, action === 'paid']);
+            await client.query('UPDATE bookings SET paid=false, payment_email_id=NULL, payment_email_sent=false WHERE id=$1', [id]);
         }
     });
+    if (booking && (action === 'paid' || action === 'retry-payment-mail')) {
+        return res.json({ ok: true, emailSent: await confirmPaymentByEmail(booking, await readSettings()) });
+    }
     if (booking) return res.json({ ok: true, emailSent: await notifyApproval(booking, await readSettings()) });
     res.json({ ok: true });
 });
