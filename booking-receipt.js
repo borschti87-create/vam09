@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+
+const logoBytes = await readFile(new URL('./assets/kuh-logo-beleg.png', import.meta.url));
 
 export async function createBookingReceipt({ reference, room, date, time, price, contact, test = false }) {
     const document = await PDFDocument.create({ updateMetadata: false });
@@ -16,6 +19,11 @@ export async function createBookingReceipt({ reference, room, date, time, price,
     }
 
     page.drawRectangle({ x: 0, y: 670, width: page.getWidth(), height: 172, color: mustard });
+    const logo = await document.embedPng(logoBytes);
+    const logoSize = logo.scaleToFit(96, 72);
+    const logoX = page.getWidth() - margin - 104;
+    page.drawRectangle({ x: logoX, y: 719, width: 104, height: 80, color: rgb(1, 1, 1) });
+    page.drawImage(logo, { x: logoX + (104 - logoSize.width) / 2, y: 719 + (80 - logoSize.height) / 2, ...logoSize });
     text('Kultur- und Innovationshof', margin, 785, 13, bold);
     text('Buchungsbeleg', margin, 731, 34, bold);
     text(test ? 'MUSTERBELEG · Keine Buchung' : 'Dein Termin ist bestätigt.', margin, 701);
@@ -25,7 +33,7 @@ export async function createBookingReceipt({ reference, room, date, time, price,
         ['Raum', room],
         ['Datum', date],
         ['Uhrzeit', `${time} (Ortszeit)`],
-        ['Gesamtpreis', price]
+        ['Gesamtpreis für Gäste', price]
     ];
     fields.forEach(([label, value], index) => {
         const y = 620 - index * 39;

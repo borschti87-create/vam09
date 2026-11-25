@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
 import { createBookingReceipt } from './booking-receipt.js';
+import { createBookingEmail } from './booking-email.js';
 import { deleteExpiredBookingContacts } from './booking-retention.js';
 
 const production = process.env.NODE_ENV === 'production';
@@ -286,7 +287,7 @@ app.get('/api/calendar', async (req, res) => {
     res.json({ days, cents: 500 + (hours - 1) * 300, paypalAvailable: paypalAvailable(settings), approvalRequired: settings.approvalRequired });
 });
 
-async function sendEmail(saved, to, subject, body, key, { attachments, sandbox = false } = {}) {
+async function sendEmail(saved, to, subject, body, key, { attachments, html, sandbox = false } = {}) {
     const settings = displaySettings(saved);
     if (!settings.emailKeySet || (!sandbox && (!settings.emailEnabled || !settings.emailFrom))) return false;
     const token = saved.emailKey === undefined ? process.env.RESEND_API_KEY : saved.emailKey && unseal(saved.emailKey);
@@ -298,7 +299,7 @@ async function sendEmail(saved, to, subject, body, key, { attachments, sandbox =
             'Content-Type': 'application/json',
             'Idempotency-Key': key
         },
-        body: JSON.stringify({ from, to: [to], reply_to: kuhEmail, subject, text: body, attachments }),
+        body: JSON.stringify({ from, to: [to], reply_to: kuhEmail, subject, text: body, html, attachments }),
         signal: AbortSignal.timeout(6500)
     });
     if (!response.ok) throw Object.assign(new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`), { status: response.status });
@@ -313,22 +314,14 @@ async function confirmByEmail(booking, saved) {
     const ref = reference(booking.id);
     const room = rooms.get(booking.room);
     const date = booking.day.split('-').reverse().join('.');
-    const time = `${booking.start_hour}:00–${booking.start_hour + booking.hours}:00 Uhr`;
+    const time = `${String(booking.start_hour).padStart(2, '0')}:00–${String(booking.start_hour + booking.hours).padStart(2, '0')}:00 Uhr`;
     const price = euro.format(booking.cents / 100);
-    const text = [
-        'Verein Aktiver Musiker 2009 e. V.',
-        `Deine KuH-Buchung ${ref} ist bestätigt. Den Buchungsbeleg findest du im Anhang.`,
-        `${room} · ${date} · ${time} (Ortszeit)`,
-        'Veranstaltungsort und Vereinsanschrift: Schlachthofstraße 10, 39418 Staßfurt',
-        `Gesamtpreis: ${price}`,
-        ...(payment ? [`Sofortzahlung per PayPal: ${payment}`, `Bitte gib die Buchungsnummer ${ref} im Zahlungsbetreff an.`] : []),
-        'Zahlung vor Ort ist nach Absprache möglich.',
-        `Bei Rückfragen erreichst du das KuH-Team unter ${kuhEmail}.`
-    ].join('\n');
+    const details = { reference: ref, room, date, time, price, payment, contact: kuhEmail };
     try {
-        const pdf = await createBookingReceipt({ reference: ref, room, date, time, price, contact: kuhEmail });
+        const { text, html } = createBookingEmail(details);
+        const pdf = await createBookingReceipt(details);
         const attachments = [{ filename: `KuH-Buchungsbeleg-${ref}.pdf`, content: Buffer.from(pdf).toString('base64') }];
-        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${ref}`, text, `kuh-booking/${booking.id}`, { attachments });
+        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${ref}`, text, `kuh-booking/${booking.id}`, { html, attachments });
         if (!sent) return false;
         await db.query('UPDATE bookings SET email_sent=true WHERE id=$1', [booking.id]);
         return true;
@@ -508,12 +501,13 @@ app.post('/api/admin/test-email', async (req, res) => {
     if (!settings.emailKeySet) fail(400, 'Bitte zuerst einen Resend-Schlüssel speichern.');
     if (!sandbox && !settings.emailEnabled) fail(400, 'Bitte den E-Mail-Versand aktivieren oder den Resend-Testabsender auswählen.');
     try {
-        const pdf = await createBookingReceipt({ reference: 'TEST0001', room: 'KuH-Proberaum', date: '01.07.2030',
-            time: '18:00–20:00 Uhr', price: euro.format(8), contact: kuhEmail, test: true });
+        const details = { reference: 'TEST0001', room: 'KuH-Proberaum', date: '01.07.2030',
+            time: '18:00–20:00 Uhr', price: euro.format(8), contact: kuhEmail, test: true };
+        const { text, html } = createBookingEmail(details);
+        const pdf = await createBookingReceipt(details);
         const attachments = [{ filename: 'KuH-Buchungsbeleg-MUSTER.pdf', content: Buffer.from(pdf).toString('base64') }];
-        const sent = await sendEmail(saved, email, '[Test] KuH-Buchungsbestätigung',
-            'Im Anhang findest du einen Musterbeleg für den KuH-Kalender. Es wurde kein Termin gebucht.',
-            `kuh-test/${randomBytes(16).toString('hex')}`, { sandbox, attachments });
+        const sent = await sendEmail(saved, email, '[Test] KuH-Buchungsbestätigung', text,
+            `kuh-test/${randomBytes(16).toString('hex')}`, { sandbox, html, attachments });
         if (!sent) fail(502, 'Der E-Mail-Versand ist nicht vollständig eingerichtet.');
     } catch (error) {
         if (!sandbox && error.status === 403) {

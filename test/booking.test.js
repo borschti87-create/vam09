@@ -49,13 +49,16 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
             if (data.subject.startsWith('Deine KuH-Buchung')) {
                 const [attachment] = data.attachments ?? [];
                 const reference = data.subject.split(' ').at(-1);
-                if (!data.text.includes('https://www.paypal.com/paypalme/TestVerein/') ||
+                if (!data.html?.includes('Deine Buchungsdaten') || !data.html.includes('Mit PayPal bezahlen') ||
+                    !data.text.includes('Für Vereinsmitglieder ist die Raumnutzung kostenlos.') ||
+                    !data.text.includes('https://www.paypal.com/paypalme/TestVerein/') ||
                     !data.text.includes('Zahlung vor Ort ist nach Absprache möglich.') ||
                     data.attachments?.length !== 1 || attachment.filename !== 'KuH-Buchungsbeleg-' + reference + '.pdf' ||
                     !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
             } else if (data.subject === '[Test] KuH-Buchungsbestätigung') {
                 const [attachment] = data.attachments ?? [];
-                if (attachment?.filename !== 'KuH-Buchungsbeleg-MUSTER.pdf' ||
+                if (!data.html?.includes('Muster einer Buchungsbestätigung') || data.html.includes('paypal.com') ||
+                    attachment?.filename !== 'KuH-Buchungsbeleg-MUSTER.pdf' ||
                     !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
             } else if (data.attachments) return new Response(null, { status: 400 });
             if (data.subject.startsWith('KuH: Zahlung bestätigt')) {
