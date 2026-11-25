@@ -295,7 +295,7 @@ function displaySettings(result) {
     document.querySelector('#admin-key-status').textContent = result.emailKeySet
         ? 'Ein Schlüssel ist hinterlegt. Lass das Feld leer, um ihn zu behalten.'
         : 'Noch kein Schlüssel hinterlegt.';
-    canSendTest = result.emailEnabled && result.emailKeySet;
+    canSendTest = result.emailKeySet;
     testEmailForm.querySelector('button').disabled = !canSendTest;
 }
 
@@ -338,7 +338,7 @@ testEmailForm.addEventListener('submit', async event => {
     button.disabled = true;
     testStatus.textContent = 'Test-E-Mail wird gesendet …';
     try {
-        await api('/api/admin/test-email', { email: testEmailForm.elements.email.value });
+        await api('/api/admin/test-email', { email: testEmailForm.elements.email.value, sandbox: testEmailForm.elements.sandbox.checked });
         testStatus.textContent = 'Der E-Mail-Anbieter hat die Test-E-Mail angenommen.';
     } catch (error) {
         if (error.status === 401) showLogin();

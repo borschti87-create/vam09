@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
-export async function createBookingReceipt({ reference, room, date, time, price, contact }) {
+export async function createBookingReceipt({ reference, room, date, time, price, contact, test = false }) {
     const document = await PDFDocument.create({ updateMetadata: false });
     document.setTitle(`KuH-Buchungsbeleg ${reference}`);
     document.setProducer('Verein Aktiver Musiker 2009 e. V.');
@@ -18,7 +18,7 @@ export async function createBookingReceipt({ reference, room, date, time, price,
     page.drawRectangle({ x: 0, y: 670, width: page.getWidth(), height: 172, color: mustard });
     text('Kultur- und Innovationshof', margin, 785, 13, bold);
     text('Buchungsbeleg', margin, 731, 34, bold);
-    text('Dein Termin ist bestätigt.', margin, 701);
+    text(test ? 'MUSTERBELEG · Keine Buchung' : 'Dein Termin ist bestätigt.', margin, 701);
 
     const fields = [
         ['Buchungsnummer', reference],
@@ -33,8 +33,12 @@ export async function createBookingReceipt({ reference, room, date, time, price,
         text(value, 225, y);
     });
 
-    text('Dieser Beleg bestätigt deine Buchung. Eine Zahlung wird damit nicht quittiert.', margin, 386, 11);
-    text('Die Zahlungsoptionen findest du in der Bestätigungs-E-Mail.', margin, 365, 11);
+    if (test) {
+        text('Dieser Musterbeleg dient nur dem Test des E-Mail-Versands.', margin, 386, 11);
+    } else {
+        text('Dieser Beleg bestätigt deine Buchung. Eine Zahlung wird damit nicht quittiert.', margin, 386, 11);
+        text('Die Zahlungsoptionen findest du in der Bestätigungs-E-Mail.', margin, 365, 11);
+    }
     page.drawLine({ start: { x: margin, y: 328 }, end: { x: page.getWidth() - margin, y: 328 }, color: mustard, thickness: 1.5 });
     text('Verein Aktiver Musiker 2009 e. V.', margin, 301, 12, bold);
     text('Schlachthofstraße 10, 39418 Staßfurt', margin, 280);

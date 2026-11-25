@@ -52,10 +52,16 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
                     !data.text.includes('Zahlung vor Ort ist nach Absprache möglich.') ||
                     data.attachments?.length !== 1 || attachment.filename !== 'KuH-Buchungsbeleg-' + reference + '.pdf' ||
                     !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
+            } else if (data.subject === '[Test] KuH-Buchungsbestätigung') {
+                const [attachment] = data.attachments ?? [];
+                if (attachment?.filename !== 'KuH-Buchungsbeleg-MUSTER.pdf' ||
+                    !Buffer.from(attachment.content, 'base64').toString('ascii', 0, 5).startsWith('%PDF-')) return new Response(null, { status: 400 });
             } else if (data.attachments) return new Response(null, { status: 400 });
+            const sandbox = data.from === 'KuH-Mailtest <onboarding@resend.dev>';
             const valid = options.headers.Authorization === 'Bearer ${mailKey}' &&
-                options.headers['Idempotency-Key'].startsWith('kuh-') && data.from === '${mailFrom}' &&
-                data.to[0].endsWith('@example.invalid') && data.reply_to === 'kuh_stassfurt@mail.de';
+                options.headers['Idempotency-Key'].startsWith('kuh-') && data.reply_to === 'kuh_stassfurt@mail.de' &&
+                (sandbox ? data.to[0] === 'kuh_stassfurt@mail.de' && data.subject === '[Test] KuH-Buchungsbestätigung'
+                    : data.from === '${mailFrom}' && data.to[0].endsWith('@example.invalid'));
             return new Response(null, { status: valid ? 202 : 400 });
         };
     `;
@@ -171,6 +177,7 @@ test('Öffnungszeiten, konkurrierende Reservierungen und Verwaltung', async t =>
     assert.equal(off.body.emailKeySet, true);
     assert.equal((await api(calendar)).body.paypalAvailable, false);
     assert.equal((await api('/api/admin/test-email', 'POST', { email: 'board@example.invalid' }, true)).status, 400);
+    assert.equal((await api('/api/admin/test-email', 'POST', { email: 'kuh_stassfurt@mail.de', sandbox: true }, true)).status, 200);
     const noIntegrations = await api('/api/bookings', 'POST', { ...base, id: randomUUID(), hour: 16 });
     assert.equal(noIntegrations.status, 201);
     assert.equal(noIntegrations.body.emailSent, false);

@@ -125,7 +125,9 @@
                     <p id="admin-settings-status" class="feedback" role="status"></p>
                 </form>
                 <form id="admin-test-email" class="settings-panel">
-                    <label>Test-E-Mail an <input name="email" type="email" maxlength="254" required></label>
+                    <label>Test-E-Mail an <input name="email" type="email" maxlength="254" value="kuh_stassfurt@mail.de" required></label>
+                    <label class="toggle-label"><input name="sandbox" type="checkbox"> Resend-Testabsender ohne eigene Absenderdomain verwenden</label>
+                    <p>Im Resend-Testmodus muss die Empfängeradresse zum Resend-Konto gehören. Die Testmail enthält einen Musterbeleg.</p>
                     <button class="button button-line" type="submit" disabled>Test-E-Mail senden</button>
                     <p id="admin-test-status" class="feedback" role="status"></p>
                 </form>

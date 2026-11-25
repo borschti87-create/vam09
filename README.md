@@ -35,6 +35,8 @@ Für die manuelle Freigabe zuerst die verifizierte Absenderadresse und einen Res
 
 Bestätigungs-E-Mails enthalten einen PDF-Buchungsbeleg. Der Kalender entfernt Namen und E-Mail-Adressen einen Kalendermonat nach Terminende beim Serverstart und anschließend stündlich. Buchungsnummer, Termin, Betrag und Status bleiben für die Zuordnung der Zahlungen erhalten. Für Aufbewahrung und Löschung von Abrechnungsunterlagen, versandten E-Mails und Sicherungskopien ist der Verein zuständig.
 
+Zum Testen ohne eigene Absenderdomain den Resend-Schlüssel im Admin-Bereich speichern und bei der Test-E-Mail den Resend-Testabsender auswählen. Als Empfänger die E-Mail-Adresse des Resend-Kontos eintragen. Der Test schickt einen PDF-Musterbeleg und legt keine Buchung an. Der Versand von regulären Bestätigungen kann dabei ausgeschaltet bleiben.
+
 Vor Öffnung des Kalenders für echte Buchungen die Rechtstexte mit den tatsächlichen Anbietern und Vereinsdaten vervollständigen. In der Monatsübersicht kann der Vorstand jeden Tag anklicken. Unter „Zeitfenster verwalten“ sind Freigaben und Sperren für einen Tag oder einen Datumsbereich mit ausgewählten Wochentagen möglich. Eine Sperre erfasst freie Stunden. Eine Stornierung gibt den gebuchten Zeitraum wieder frei. Die buchende Person wird vom Vorstand über eine Stornierung informiert.
 
 Für den Regelbetrieb die vollständige Geschäftsanschrift und die Vereinsregisternummer ergänzen. Außerdem die Zahlungsbedingungen, das für die Raumangebote geltende Widerrufsrecht, die Form der Vertragsbestätigung und gegebenenfalls die elektronische Widerrufsfunktion fachlich prüfen. Bei zusätzlichen externen Einbettungen oder Analysewerkzeugen den Cookie-Hinweis und die Einwilligung vor Aktivierung prüfen.

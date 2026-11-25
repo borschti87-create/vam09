@@ -284,10 +284,11 @@ app.get('/api/calendar', async (req, res) => {
     res.json({ days, cents: 500 + (hours - 1) * 300, paypalAvailable: paypalAvailable(settings), approvalRequired: settings.approvalRequired });
 });
 
-async function sendEmail(saved, to, subject, body, key, attachments) {
+async function sendEmail(saved, to, subject, body, key, { attachments, sandbox = false } = {}) {
     const settings = displaySettings(saved);
-    if (!settings.emailEnabled || !settings.emailFrom || !settings.emailKeySet) return false;
+    if (!settings.emailKeySet || (!sandbox && (!settings.emailEnabled || !settings.emailFrom))) return false;
     const token = saved.emailKey === undefined ? process.env.RESEND_API_KEY : saved.emailKey && unseal(saved.emailKey);
+    const from = sandbox ? 'KuH-Mailtest <onboarding@resend.dev>' : saved.emailFrom ?? process.env.BOOKING_FROM;
     const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -295,7 +296,7 @@ async function sendEmail(saved, to, subject, body, key, attachments) {
             'Content-Type': 'application/json',
             'Idempotency-Key': key
         },
-        body: JSON.stringify({ from: saved.emailFrom ?? process.env.BOOKING_FROM, to: [to], reply_to: kuhEmail, subject, text: body, attachments }),
+        body: JSON.stringify({ from, to: [to], reply_to: kuhEmail, subject, text: body, attachments }),
         signal: AbortSignal.timeout(6500)
     });
     if (!response.ok) throw new Error(`E-Mail-Anbieter antwortet mit HTTP ${response.status}.`);
@@ -325,7 +326,7 @@ async function confirmByEmail(booking, saved) {
     try {
         const pdf = await createBookingReceipt({ reference: ref, room, date, time, price, contact: kuhEmail });
         const attachments = [{ filename: `KuH-Buchungsbeleg-${ref}.pdf`, content: Buffer.from(pdf).toString('base64') }];
-        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${ref}`, text, `kuh-booking/${booking.id}`, attachments);
+        const sent = await sendEmail(saved, booking.email, `Deine KuH-Buchung ${ref}`, text, `kuh-booking/${booking.id}`, { attachments });
         if (!sent) return false;
         await db.query('UPDATE bookings SET email_sent=true WHERE id=$1', [booking.id]);
         return true;
@@ -474,15 +475,24 @@ app.post('/api/admin/settings', async (req, res) => {
 app.post('/api/admin/test-email', async (req, res) => {
     rateLimit(req, 'mail-test', 5, 60 * 60 * 1000);
     const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const sandbox = req.body?.sandbox === true;
     if (email.length > 254 || !emailPattern.test(email)) fail(400, 'Bitte eine gültige Test-E-Mail-Adresse eingeben.');
     const saved = await readSettings();
-    if (!displaySettings(saved).emailEnabled) fail(400, 'Bitte den E-Mail-Versand zuerst aktivieren und speichern.');
+    const settings = displaySettings(saved);
+    if (!settings.emailKeySet) fail(400, 'Bitte zuerst einen Resend-Schlüssel speichern.');
+    if (!sandbox && !settings.emailEnabled) fail(400, 'Bitte den E-Mail-Versand aktivieren oder den Resend-Testabsender auswählen.');
     try {
-        const sent = await sendEmail(saved, email, 'KuH: Test der Buchungsbestätigung',
-            'Der E-Mail-Versand für die KuH-Raumbuchung ist eingerichtet.', `kuh-test/${randomBytes(16).toString('hex')}`);
+        const pdf = await createBookingReceipt({ reference: 'TEST0001', room: 'KuH-Proberaum', date: '01.07.2030',
+            time: '18:00–20:00 Uhr', price: euro.format(8), contact: kuhEmail, test: true });
+        const attachments = [{ filename: 'KuH-Buchungsbeleg-MUSTER.pdf', content: Buffer.from(pdf).toString('base64') }];
+        const sent = await sendEmail(saved, email, '[Test] KuH-Buchungsbestätigung',
+            'Im Anhang findest du einen Musterbeleg für den KuH-Kalender. Es wurde kein Termin gebucht.',
+            `kuh-test/${randomBytes(16).toString('hex')}`, { sandbox, attachments });
         if (!sent) fail(502, 'Der E-Mail-Versand ist nicht vollständig eingerichtet.');
     } catch {
-        return res.status(502).json({ error: 'Die Test-E-Mail konnte nicht gesendet werden. Bitte prüfe Absender und Resend-Schlüssel.' });
+        return res.status(502).json({ error: sandbox
+            ? 'Die Test-E-Mail konnte nicht gesendet werden. Prüfe den Resend-Schlüssel und verwende die Anmeldeadresse des Resend-Kontos.'
+            : 'Die Test-E-Mail konnte nicht gesendet werden. Bitte prüfe Absender und Resend-Schlüssel.' });
     }
     res.json({ ok: true });
 });
